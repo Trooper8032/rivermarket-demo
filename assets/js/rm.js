@@ -11,7 +11,7 @@ const LBL='font-medium text-gray-800';
 const PALETA=['#0aad0a','#16a34a','#0f766e','#2563eb','#7c3aed','#db2777','#dc2626','#ea580c','#ca8a04','#21313c'];
 const RUBROS=['Postres y tortas','Comida','Ropa y calzado','Tecnología','Plantas y jardín','Hogar','Belleza','Mascotas','Ferretería','Abarrotes','Artesanía','Otro'];
 const CIUDADES=['Arequipa','Trujillo','Chiclayo','Piura','Cusco','Iquitos','Huancayo','Tacna','Ica','Puno','Juliaca','Cajamarca','Pucallpa','Chimbote','Ayacucho','Huánuco','Tarapoto','Huaraz','Moquegua','Tumbes','Puerto Maldonado','Chachapoyas','Abancay','Huancavelica','Cerro de Pasco','Callao','Chincha','Sullana','Huacho','Chancay','Talara','Jaén'];
-const PLANES={prueba:'Prueba gratis',basico:'Básico · S/ 19 al mes',pro:'Pro · S/ 39 al mes'};
+const PLANES={prueba:'Prueba gratis',estandar:'Estándar · S/ 7 al mes'};/* premium: próximamente */
 const SECC_DEF={portada:true,bienvenida:true,buscador:true,categorias:true,info:true};
 const soles=n=>'S/ '+Number(n||0).toFixed(2);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
