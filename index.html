@@ -1,0 +1,34 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.46.0/tabler-icons.min.css"><link rel="stylesheet" href="assets/css/theme.css"><script src="assets/js/app.js"></script><title>RiverMarket · Crea tu tienda virtual</title></head><body class="text-gray-600">
+<div id="cab"></div>
+<section class="container mt-6"><div class="rounded-2xl overflow-hidden relative bg-gray-900">
+<img src="assets/images/demo/tienda-ropa.jpg" alt="" class="absolute inset-0 w-full h-full object-cover opacity-40">
+<div class="relative px-6 py-12 md:p-16 lg:w-2/3">
+<span class="inline-block px-3 py-1 rounded bg-yellow-400 text-gray-900 font-semibold text-sm">1 mes gratis con soporte del sistema</span>
+<h1 class="text-white text-3xl md:text-5xl font-bold leading-tight my-4">Tu tienda virtual lista para vender</h1>
+<p class="text-gray-200 text-md mb-6">Catálogo con fotos, carrito de compras y pedidos directo a tu WhatsApp. Todo lo administras desde tu celular.</p>
+<div class="flex flex-wrap gap-3"><a href="#registro" class="${BTN}">Pide tu demo y tu prueba gratis <i class="ti ti-arrow-right"></i></a><a href="directorio.html" class="btn inline-flex items-center gap-x-2 bg-white text-gray-800 border-white hover:bg-gray-100">Ver tiendas de ejemplo</a></div>
+</div></div></section>
+<section class="container my-10"><div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="ventajas"></div></section>
+<section class="container my-12"><h2 class="text-lg mb-6">Tiendas que puedes tener</h2><div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" id="vitrina"></div></section>
+<section class="bg-gray-100 py-12"><div class="container"><h2 class="text-lg mb-6 text-center">Cómo funciona</h2><div class="grid gap-6 md:grid-cols-4" id="pasos"></div></div></section>
+<section class="container my-12" id="registro"><div class="grid gap-6 lg:grid-cols-2 items-stretch">
+<div class="rounded-2xl bg-green-600 text-white p-8 flex flex-col justify-center">
+<i class="ti ti-gift text-[56px]"></i><h2 class="text-white text-2xl my-3">Pide tu demo y tu prueba gratis</h2>
+<p class="text-green-50 text-md mb-4"><b>1 mes gratis con soporte del sistema.</b> Te ayudamos a subir tus productos y a dejar tu tienda organizada.</p>
+<ul class="space-y-2 mb-6"><li><i class="ti ti-check"></i> Tienda con tu logo y colores</li><li><i class="ti ti-check"></i> Catálogo con categorías y buscador</li><li><i class="ti ti-check"></i> Pedidos por WhatsApp</li><li><i class="ti ti-check"></i> Panel para editar productos y precios</li></ul>
+<a target="_blank" href="https://wa.me/51971941531?text=Hola%2C%20quiero%20mi%20demo%20y%20prueba%20gratis%20de%20tienda%20virtual" class="${WAC} self-start"><i class="ti ti-brand-whatsapp text-lg"></i> +51 971 941 531</a></div>
+<form id="f" class="border border-gray-300 rounded-2xl p-6 md:p-8 bg-white"><h3 class="mb-1">Registra tu negocio</h3><p class="mb-5">Te contactamos para activar tu mes gratis.</p>
+<label class="font-medium text-gray-800">Nombre del negocio</label><input name="negocio" required class="${INP}">
+<label class="font-medium text-gray-800">Tu nombre</label><input name="nombre" required class="${INP}">
+<label class="font-medium text-gray-800">WhatsApp</label><input name="wa" required inputmode="tel" pattern="[0-9 +]{9,15}" placeholder="9XX XXX XXX" class="${INP}">
+<label class="font-medium text-gray-800">Rubro</label><select name="rubro" class="${INP}"><option>Comida y postres</option><option>Ropa y calzado</option><option>Tecnología</option><option>Hogar y plantas</option><option>Otro</option></select>
+<button class="${BTN} w-full">Pide tu demo y tu prueba gratis</button><div id="msg" class="mt-3"></div></form></div></section>
+<div id="pie"></div>
+<script>
+document.querySelectorAll('[class*="${"]').forEach(e=>e.className=e.className.replace(/\$\{(\w+)\}/g,(m,k)=>window[k]||eval(k)));
+montar('ini');
+ventajas.innerHTML=[['ti-building-store','Tienda propia','Tu logo, colores y enlace'],['ti-brand-whatsapp','Pedidos por WhatsApp','Llegan con detalle y total'],['ti-device-mobile','Desde tu celular','Cambia precios al instante'],['ti-layout-grid','Todo organizado','Categorías y buscador']].map(([i,t,s])=>`<div class="border border-gray-300 rounded-lg p-5 text-center hover:shadow-md transition"><div class="w-14 h-14 mx-auto rounded-full bg-green-100 text-green-700 grid place-items-center mb-3"><i class="ti ${i} text-[28px]"></i></div><h3 class="text-base font-semibold">${t}</h3><p class="text-sm">${s}</p></div>`).join('');
+const d=cargar();vitrina.innerHTML=d.tiendas.map(t=>`<a href="tienda.html?t=${t.id}" class="group rounded-lg overflow-hidden border border-gray-300 hover:shadow-lg transition bg-white"><div class="h-36 overflow-hidden"><img src="${t.banner?IMG+t.banner:t.productos[0].img}" class="w-full h-full object-cover group-hover:scale-105 transition"></div><div class="p-4"><div class="font-semibold text-gray-800">${esc(t.nombre)}</div><div class="text-sm">${esc(t.rubro)}</div></div></a>`).join('');
+pasos.innerHTML=[['Te registras','Llena el formulario o escríbenos.'],['Armamos tu tienda','Logo, productos y categorías.'],['Compartes tu enlace','En redes, estados y grupos.'],['Recibes pedidos','Directo en tu WhatsApp.']].map(([t,s],i)=>`<div class="text-center"><div class="w-12 h-12 mx-auto rounded-full bg-gray-800 text-white grid place-items-center font-bold text-md mb-3">${i+1}</div><h3 class="text-base font-semibold">${t}</h3><p>${s}</p></div>`).join('');
+f.onsubmit=e=>{e.preventDefault();const s=Object.fromEntries(new FormData(f));s.fecha=new Date().toLocaleString('es-PE');d.solicitudes.push(s);guardar(d);f.reset();msg.innerHTML='<div class="p-3 rounded-lg bg-green-100 text-green-800">✅ ¡Gracias! Te contactaremos pronto para activar tu mes gratis.</div>'}
+</script></body></html>
