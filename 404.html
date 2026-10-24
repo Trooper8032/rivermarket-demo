@@ -1,1 +1,1 @@
-<!doctype html><meta charset=utf-8><title>RiverMarket</title><script>const s=location.pathname.split('/').filter(Boolean)[0];location.replace(s&&/^[a-z0-9-]+$/.test(s)?'/tienda.html?t='+s:'/')</script>
+<!doctype html><meta charset=utf-8><title>RiverMarket</title><script>const b=location.pathname.startsWith('/rivermarket-demo/')?'/rivermarket-demo/':'/';const s=location.pathname.slice(b.length).split('/').filter(Boolean)[0];location.replace(b+(s&&/^[a-z0-9-]+$/.test(s)?'tienda.html?t='+s:''))</script>

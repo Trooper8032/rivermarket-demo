@@ -1,0 +1,24 @@
+{
+ "id": "../tienda.html?t=moda-urbana",
+ "name": "Moda Urbana",
+ "short_name": "Moda Urbana",
+ "start_url": "../tienda.html?t=moda-urbana",
+ "scope": "../",
+ "display": "standalone",
+ "background_color": "#ffffff",
+ "theme_color": "#7c3aed",
+ "lang": "es",
+ "icons": [
+  {
+   "src": "../assets/images/icono-192.png",
+   "sizes": "192x192",
+   "type": "image/png"
+  },
+  {
+   "src": "../assets/images/icono-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "any maskable"
+  }
+ ]
+}

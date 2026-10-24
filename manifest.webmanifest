@@ -1,0 +1,23 @@
+{
+ "name": "RiverMarket",
+ "short_name": "RiverMarket",
+ "start_url": "./directorio.html",
+ "scope": "./",
+ "display": "standalone",
+ "background_color": "#ffffff",
+ "theme_color": "#0aad0a",
+ "lang": "es",
+ "icons": [
+  {
+   "src": "assets/images/icono-192.png",
+   "sizes": "192x192",
+   "type": "image/png"
+  },
+  {
+   "src": "assets/images/icono-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "any maskable"
+  }
+ ]
+}
