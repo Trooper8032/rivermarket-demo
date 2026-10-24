@@ -1,0 +1,53 @@
+/* RiverMarket · utilidades comunes. Diseño basado en Freshcart (MIT, Codescandy). */
+const SB_URL='https://yqweqmevdngfbvcjsnrs.supabase.co',SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlxd2VxbWV2ZG5nZmJ2Y2pzbnJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI0MzIyMDIsImV4cCI6MjEwODAwODIwMn0.f1fzIp52sE0pi-nlEgSi4iRASy_s--7hYF_Nj6UDu4o'; // clave pública (anon), protegida por RLS
+const sb=supabase.createClient(SB_URL,SB_ANON,{auth:{persistSession:true,detectSessionInUrl:true,flowType:'implicit'}});
+const BASE_URL='https://trooper8032.github.io/rivermarket-demo/';
+const BTN='btn inline-flex items-center justify-center gap-x-2 bg-green-600 text-white border-green-600 hover:text-white hover:bg-green-700 hover:border-green-700 focus:outline-none focus:ring-4 focus:ring-green-300 disabled:opacity-50';
+const BTNO='btn inline-flex items-center justify-center gap-x-2 bg-white text-gray-800 border-gray-300 hover:bg-gray-100 disabled:opacity-50';
+const BTNR='btn inline-flex items-center justify-center gap-x-2 bg-white text-red-600 border-red-300 hover:bg-red-50';
+const WAC='btn inline-flex items-center justify-center gap-x-2 bg-[#25d366] text-white border-[#25d366] hover:bg-[#1ebe5b] hover:text-white';
+const INP='border border-gray-300 text-gray-900 rounded-lg focus:ring-green-600 focus:border-green-600 block w-full p-2 px-3 mb-3';
+const LBL='font-medium text-gray-800';
+const PALETA=['#0aad0a','#16a34a','#0f766e','#2563eb','#7c3aed','#db2777','#dc2626','#ea580c','#ca8a04','#21313c'];
+const RUBROS=['Postres y tortas','Comida','Ropa y calzado','Tecnología','Plantas y jardín','Hogar','Belleza','Mascotas','Ferretería','Abarrotes','Artesanía','Otro'];
+const CIUDADES=['Arequipa','Trujillo','Chiclayo','Piura','Cusco','Iquitos','Huancayo','Tacna','Ica','Puno','Juliaca','Cajamarca','Pucallpa','Chimbote','Ayacucho','Huánuco','Tarapoto','Huaraz','Moquegua','Tumbes','Puerto Maldonado','Chachapoyas','Abancay','Huancavelica','Cerro de Pasco','Callao','Chincha','Sullana','Huacho','Chancay','Talara','Jaén'];
+const PLANES={prueba:'Prueba gratis',basico:'Básico · S/ 19 al mes',pro:'Pro · S/ 39 al mes'};
+const SECC_DEF={portada:true,bienvenida:true,buscador:true,categorias:true,info:true};
+const soles=n=>'S/ '+Number(n||0).toFixed(2);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $=id=>document.getElementById(id);
+function src(v){return !v?'assets/images/demo/sin-foto.svg':v}
+function cfg(t){return{estilo:t.estilo||'clasica',vista:t.vista||'grid',bienvenida:t.bienvenida||'',secc:Object.assign({},SECC_DEF,t.secc||{})}}
+function logoHTML(t,cls,icls){return t.logo?`<img src="${esc(t.logo)}" alt="" class="${cls} object-cover bg-white">`:`<div class="${cls} grid place-items-center text-white" style="background:${esc(t.color||'#0aad0a')}"><i class="ti ${esc(t.icono||'ti-building-store')} ${icls}"></i></div>`}
+function descuento(p){return p.precio_antes&&+p.precio_antes>+p.precio?Math.round((1-p.precio/p.precio_antes)*100):0}
+function precioValido(v){const s=String(v??'').trim().replace(',','.');if(!/^\d+(\.\d{1,2})?$/.test(s))return null;const n=parseFloat(s);return n>0?n:null}
+function rucValido(r){r=String(r).trim();if(!/^(10|15|17|20)\d{9}$/.test(r))return false;const w=[5,4,3,2,7,6,5,4,3,2];let s=0;for(let i=0;i<10;i++)s+=+r[i]*w[i];let dv=11-s%11;if(dv==10)dv=0;if(dv==11)dv=1;return dv==+r[10]}
+function estrellas(n,cls='text-yellow-500'){n=Math.round(n||0);return `<span class="${cls} whitespace-nowrap">${'★'.repeat(n)}<span class="text-gray-300">${'★'.repeat(5-n)}</span></span>`}
+function envioTexto(t){return t.zona_tipo=='peru'?'Envíos a todo el Perú':t.zona_tipo=='distritos'?'Envíos en '+(t.zona_distritos||[]).join(', '):'Envíos en '+t.ciudad}
+function enviaA(t,ciudad){if(!ciudad)return true;const c=ciudad.toLowerCase();return t.zona_tipo=='peru'||(t.ciudad||'').toLowerCase()==c}
+const BADGE_VERIF='<span class="inline-flex items-center gap-1 text-sm font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5"><i class="ti ti-rosette-discount-check"></i> Tienda verificada</span>';
+const BADGE_PERU='<span class="inline-flex items-center gap-1 text-sm font-semibold text-green-800 bg-green-50 border border-green-200 rounded-full px-2 py-0.5"><i class="ti ti-truck"></i> Envíos a todo el Perú</span>';
+function aviso(t,ms=2800){let e=$('toast');if(!e){e=document.createElement('div');e.id='toast';e.className='fixed top-20 left-1/2 -translate-x-1/2 z-[60] bg-gray-800 text-white rounded-lg px-4 py-2 shadow-lg max-w-[90vw] text-center';document.body.appendChild(e)}e.textContent=t;e.style.display='block';clearTimeout(e._t);e._t=setTimeout(()=>e.style.display='none',ms)}
+function errTxt(e){const m=(e&&(e.message||e.error_description))||String(e);if(/Invalid login/i.test(m))return'Correo o contraseña incorrectos.';if(/Email not confirmed/i.test(m))return'Aún no confirmas tu correo. Revisa tu bandeja de entrada o spam.';if(/rate limit/i.test(m))return'Se enviaron demasiados correos. Intenta de nuevo en una hora.';if(/already registered/i.test(m))return'Ese correo ya está registrado. Ingresa o recupera tu contraseña.';return m}
+/* Imagen: reduce y comprime (canvas) → Blob JPEG */
+function cargarImagen(file){return new Promise((ok,mal)=>{if(!file||!/^image\//.test(file.type))return mal(new Error('El archivo no es una imagen.'));const u=URL.createObjectURL(file),im=new Image();im.onload=()=>ok(im);im.onerror=()=>mal(new Error('Formato de imagen no compatible.'));im.src=u})}
+function aCanvas(im,max){let w=im.naturalWidth||im.width,h=im.naturalHeight||im.height;const k=Math.min(1,max/Math.max(w,h));w=Math.round(w*k);h=Math.round(h*k);const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(im,0,0,w,h);return c}
+function canvasBlob(c,tipo='image/jpeg',q=0.78){return new Promise(ok=>c.toBlob(ok,tipo,q))}
+async function comprimir(file,max=900,q=0.78){const im=await cargarImagen(file);const c=aCanvas(im,max);const x=document.createElement('canvas');x.width=c.width;x.height=c.height;const g=x.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,x.width,x.height);g.drawImage(c,0,0);return canvasBlob(x,'image/jpeg',q)}
+async function subirPublico(blob,carpeta='img',ext='jpg'){const {data:{user}}=await sb.auth.getUser();const ruta=`${user.id}/${carpeta}/${Date.now()}-${Math.random().toString(36).slice(2,7)}.${ext}`;const {error}=await sb.storage.from('publico').upload(ruta,blob,{contentType:blob.type||'image/jpeg',upsert:false});if(error)throw error;return sb.storage.from('publico').getPublicUrl(ruta).data.publicUrl}
+async function sesion(){const {data:{session}}=await sb.auth.getSession();return session}
+async function perfil(){const s=await sesion();if(!s)return null;const {data}=await sb.from('perfiles').select('*').eq('id',s.user.id).maybeSingle();return data}
+function cabecera(activo,s){const l=(h,t,k)=>`<a href="${h}" class="px-2 md:px-3 py-2 rounded-lg font-medium whitespace-nowrap ${activo==k?'text-green-600':'text-gray-800 hover:text-green-600'}">${t}</a>`;
+return `<div id="bannerTop" class="bg-gray-100 text-sm py-1 text-center text-gray-600">🎁 Vende con nosotros: 1 mes gratis con soporte del sistema</div>
+<header class="border-b border-gray-200 bg-white sticky top-0 z-30"><div class="container flex items-center justify-between h-16 gap-2">
+<a href="index.html" class="flex items-center gap-2 text-lg font-bold text-gray-800"><span class="w-9 h-9 rounded-lg bg-green-600 text-white grid place-items-center"><i class="ti ti-building-store text-xl"></i></span><span class="hidden sm:inline">River<span class="text-green-600">Market</span></span></a>
+<nav class="flex items-center text-base">${l('directorio.html','Tiendas','dir')}${s?l('panel.html','<i class="ti ti-layout-dashboard"></i> <span class="hidden md:inline">Mi panel</span>','panel'):l('ingresar.html','Ingresar','ing')}
+${s?'':`<a href="registro.html" class="${BTN} btn-sm ml-1">Vender</a>`}</nav></div></header>`}
+function pie(){return `<footer class="bg-gray-100 mt-12 py-8 text-gray-600"><div class="container grid md:grid-cols-3 gap-6">
+<div><div class="font-bold text-gray-800 text-md mb-2">River<span class="text-green-600">Market</span></div><p>Tiendas de emprendedores verificados con pedidos por WhatsApp.</p></div>
+<div><div class="font-semibold text-gray-800 mb-2">Contacto</div><p>RIVERGREEN SOLUTIONS E.I.R.L. · RUC 20613802984<br><a class="text-green-600" href="mailto:ventas@rivergreensolutions.com">Escríbenos a ventas@rivergreensolutions.com</a><br><a class="text-green-600" href="https://wa.me/51971941531" target="_blank">WhatsApp +51 971 941 531</a></p></div>
+<div><div class="font-semibold text-gray-800 mb-2">Enlaces</div><p><a href="registro.html">Vende con nosotros</a> · <a href="privacidad.html">Política de privacidad</a> · <a href="ingresar.html">Ingresar</a></p></div></div>
+<div class="container text-[11px] leading-snug mt-6 border-t border-gray-300 pt-3 text-gray-500">© 2026 RIVERGREEN SOLUTIONS E.I.R.L. · Diseño basado en <a class="underline" href="https://github.com/codescandy/freshcart-tailwind-ecommerce-HTML-template">Freshcart</a> (MIT) · Íconos Tabler (MIT) · Fotos de ejemplo: <a class="underline" href="https://unsplash.com/license">Unsplash</a></div></footer>`}
+async function montar(activo){const s=await sesion();if($('cab'))$('cab').innerHTML=cabecera(activo,s);if($('pie'))$('pie').innerHTML=pie();
+sb.from('mercado').select('valor').eq('clave','banners').maybeSingle().then(({data})=>{const b=data&&data.valor&&data.valor[0];if(b&&$('bannerTop'))$('bannerTop').innerHTML=b.enlace?`<a href="${esc(b.enlace)}">${esc(b.texto)}</a>`:esc(b.texto)});return s}
+function fixClases(){document.querySelectorAll('[class*="${"]').forEach(e=>e.className=e.className.replace(/\$\{(\w+)\}/g,(m,k)=>eval(k)))}
