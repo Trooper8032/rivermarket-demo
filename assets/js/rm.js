@@ -1,7 +1,7 @@
 /* RiverMarket · utilidades comunes. Diseño basado en Freshcart (MIT, Codescandy). */
 const SB_URL='https://yqweqmevdngfbvcjsnrs.supabase.co',SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlxd2VxbWV2ZG5nZmJ2Y2pzbnJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI0MzIyMDIsImV4cCI6MjEwODAwODIwMn0.f1fzIp52sE0pi-nlEgSi4iRASy_s--7hYF_Nj6UDu4o'; // clave pública (anon), protegida por RLS
 const sb=supabase.createClient(SB_URL,SB_ANON,{auth:{persistSession:true,detectSessionInUrl:true,flowType:'implicit'}});
-const BASE_URL='https://trooper8032.github.io/rivermarket-demo/';
+const BASE_URL='https://market.rivergreensolutions.com/';
 const BTN='btn inline-flex items-center justify-center gap-x-2 bg-green-600 text-white border-green-600 hover:text-white hover:bg-green-700 hover:border-green-700 focus:outline-none focus:ring-4 focus:ring-green-300 disabled:opacity-50';
 const BTNO='btn inline-flex items-center justify-center gap-x-2 bg-white text-gray-800 border-gray-300 hover:bg-gray-100 disabled:opacity-50';
 const BTNR='btn inline-flex items-center justify-center gap-x-2 bg-white text-red-600 border-red-300 hover:bg-red-50';
@@ -61,9 +61,12 @@ const op=(ic,t,cls,act)=>`<button class="w-full flex items-center gap-3 rounded-
 m.innerHTML=`<div class="bg-white w-full sm:max-w-sm rounded-t-2xl sm:rounded-2xl p-5"><div class="flex justify-between items-center mb-1"><h3 class="text-lg font-bold">Compartir tienda</h3><button onclick="this.closest('#mCompartir').remove()" class="text-gray-500"><i class="ti ti-x text-[22px]"></i></button></div><p class="text-sm text-gray-500 mb-4">${esc(nombre)}</p><div class="space-y-2">
 ${op('ti-brand-whatsapp','Enviar por WhatsApp','bg-green-100 text-green-700',`window.open('https://wa.me/?text='+encodeURIComponent(${esc(JSON.stringify(txt+' '+url))}),'_blank')`)}
 ${op('ti-brand-facebook','Compartir en Facebook','bg-blue-100 text-blue-700',`window.open('https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent('${url}'),'_blank')`)}
+${op('ti-brand-instagram','Compartir en Instagram','bg-pink-100 text-pink-700',`copiarIG(${esc(JSON.stringify(txt+' '+url))},this)`)}
 ${op('ti-link','Copiar enlace','bg-gray-100 text-gray-700',`copiarLink('${url}',this)`)}
 ${op('ti-qrcode','Mostrar código QR','bg-yellow-100 text-yellow-700',`verQRCompartir('${url}')`)}
 ${navigator.share?op('ti-share','Más opciones…','bg-gray-100 text-gray-700',`navigator.share({title:document.title,url:'${url}'}).catch(()=>{})`):''}
 </div><div id="qrComp" class="hidden mt-4 text-center"><div id="qrCompC" class="inline-block p-3 bg-white border rounded-xl"></div><p class="text-sm text-gray-500 mt-1">Escanéalo con la cámara del celular</p></div><input readonly value="${url}" class="mt-4 w-full text-sm border border-gray-200 rounded-lg p-2 text-gray-600" onclick="this.select()"></div>`;document.body.appendChild(m)}
 async function copiarLink(u,b){try{await navigator.clipboard.writeText(u)}catch(e){const i=document.createElement('input');i.value=u;document.body.appendChild(i);i.select();document.execCommand('copy');i.remove()}b.querySelector('.font-semibold').textContent='¡Enlace copiado!'}
 async function verQRCompartir(u){if(typeof QRCode=='undefined')await new Promise((r,j)=>{const s=document.createElement('script');s.src='assets/js/qrcode.min.js';s.onload=r;s.onerror=j;document.head.appendChild(s)});const c=document.getElementById('qrCompC');c.innerHTML='';new QRCode(c,{text:u,width:200,height:200});document.getElementById('qrComp').classList.remove('hidden')}
+
+async function copiarIG(t,b){try{await navigator.clipboard.writeText(t)}catch(e){const i=document.createElement('textarea');i.value=t;document.body.appendChild(i);i.select();document.execCommand('copy');i.remove()}b.querySelector('.font-semibold').textContent='¡Copiado! Pégalo en tu historia, mensaje directo o biografía de Instagram';setTimeout(()=>{if(/Android|iPhone|iPad|Mobi/i.test(navigator.userAgent))location.href='instagram://app'},1200)}

@@ -110,7 +110,7 @@ if(v.ruc&&!rucValido(v.ruc))return m1.innerHTML='<div class="p-3 rounded-lg bg-r
 v.zona_distritos=v.zona_distritos.split(',').map(x=>x.trim()).filter(Boolean);Object.assign(v,{color:tmp.color,logo:tmp.logo,portada:tmp.portada,estilo:tmp.estilo,vista:tmp.vista,secc:tmp.secc});
 const {data,error}=await sb.from('tiendas').update(v).eq('id',T.id).select().single();if(error)return m1.innerHTML=`<div class="p-3 rounded-lg bg-red-50 text-red-700">${esc(errTxt(error))}</div>`;T=data;cab();m1.innerHTML='<div class="p-3 rounded-lg bg-green-100 text-green-800">✅ Guardado. Ya se ve en tu tienda.</div>'}
 /* ===== QR ===== */
-const urlT=()=>BASE_URL+T.slug+'/';function qrHacer(){qn.textContent=T.nombre;qu.textContent=urlT();qr.innerHTML='';new QRCode(qr,{text:urlT(),width:220,height:220,correctLevel:QRCode.CorrectLevel.M})}
+const urlT=()=>linkTienda(T.slug);function qrHacer(){qn.textContent=T.nombre;qu.textContent=urlT();qr.innerHTML='';new QRCode(qr,{text:urlT(),width:220,height:220,correctLevel:QRCode.CorrectLevel.M})}
 function qrImg(){const c=qr.querySelector('canvas');return c?c.toDataURL('image/png'):qr.querySelector('img').src}
 function bajar(u,n){const a=document.createElement('a');a.href=u;a.download=n;a.click()}
 function imprimirQR(){const w=window.open('','_blank');w.document.write(`<html><head><title>QR</title></head><body style="font-family:sans-serif;text-align:center;padding:40px"><h1>${esc(T.nombre)}</h1><h2>Escanea y haz tu pedido</h2><img src="${qrImg()}" style="width:320px"><p style="font-size:18px">${esc(urlT())}</p><script>onload=()=>print()<\/script></body></html>`);w.document.close()}
