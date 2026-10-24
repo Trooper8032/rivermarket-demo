@@ -51,3 +51,19 @@ function pie(){return `<footer class="bg-gray-100 mt-12 py-8 text-gray-600"><div
 async function montar(activo){const s=await sesion();if($('cab'))$('cab').innerHTML=cabecera(activo,s);if($('pie'))$('pie').innerHTML=pie();
 sb.from('mercado').select('valor').eq('clave','banners').maybeSingle().then(({data})=>{const b=data&&data.valor&&data.valor[0];if(b&&$('bannerTop'))$('bannerTop').innerHTML=b.enlace?`<a href="${esc(b.enlace)}">${esc(b.texto)}</a>`:esc(b.texto)});return s}
 function fixClases(){document.querySelectorAll('[class*="${"]').forEach(e=>e.className=e.className.replace(/\$\{(\w+)\}/g,(m,k)=>eval(k)))}
+
+/* Compartir tienda: Web Share API en celulares + opciones WhatsApp, Facebook, copiar enlace y QR */
+function linkTienda(slug){return BASE_URL+'tienda.html?t='+encodeURIComponent(slug)}
+async function compartirTienda(nombre,slug,directo=true){const url=linkTienda(slug),txt=`¡Visita ${nombre} en RiverMarket! Mira el catálogo y haz tu pedido por WhatsApp:`;
+if(directo&&navigator.share&&/Android|iPhone|iPad|Mobi/i.test(navigator.userAgent)){try{await navigator.share({title:nombre,text:txt,url});return}catch(e){if(e.name=='AbortError')return}}
+document.getElementById('mCompartir')?.remove();const m=document.createElement('div');m.id='mCompartir';m.className='fixed inset-0 z-[100] bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4';m.onclick=e=>{if(e.target==m)m.remove()};
+const op=(ic,t,cls,act)=>`<button class="w-full flex items-center gap-3 rounded-xl border border-gray-200 px-4 py-3 hover:bg-gray-50 text-left" onclick="${act}"><span class="w-10 h-10 rounded-full grid place-items-center ${cls}"><i class="ti ${ic} text-[22px]"></i></span><span class="font-semibold text-gray-800">${t}</span></button>`;
+m.innerHTML=`<div class="bg-white w-full sm:max-w-sm rounded-t-2xl sm:rounded-2xl p-5"><div class="flex justify-between items-center mb-1"><h3 class="text-lg font-bold">Compartir tienda</h3><button onclick="this.closest('#mCompartir').remove()" class="text-gray-500"><i class="ti ti-x text-[22px]"></i></button></div><p class="text-sm text-gray-500 mb-4">${esc(nombre)}</p><div class="space-y-2">
+${op('ti-brand-whatsapp','Enviar por WhatsApp','bg-green-100 text-green-700',`window.open('https://wa.me/?text='+encodeURIComponent(${esc(JSON.stringify(txt+' '+url))}),'_blank')`)}
+${op('ti-brand-facebook','Compartir en Facebook','bg-blue-100 text-blue-700',`window.open('https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent('${url}'),'_blank')`)}
+${op('ti-link','Copiar enlace','bg-gray-100 text-gray-700',`copiarLink('${url}',this)`)}
+${op('ti-qrcode','Mostrar código QR','bg-yellow-100 text-yellow-700',`verQRCompartir('${url}')`)}
+${navigator.share?op('ti-share','Más opciones…','bg-gray-100 text-gray-700',`navigator.share({title:document.title,url:'${url}'}).catch(()=>{})`):''}
+</div><div id="qrComp" class="hidden mt-4 text-center"><div id="qrCompC" class="inline-block p-3 bg-white border rounded-xl"></div><p class="text-sm text-gray-500 mt-1">Escanéalo con la cámara del celular</p></div><input readonly value="${url}" class="mt-4 w-full text-sm border border-gray-200 rounded-lg p-2 text-gray-600" onclick="this.select()"></div>`;document.body.appendChild(m)}
+async function copiarLink(u,b){try{await navigator.clipboard.writeText(u)}catch(e){const i=document.createElement('input');i.value=u;document.body.appendChild(i);i.select();document.execCommand('copy');i.remove()}b.querySelector('.font-semibold').textContent='¡Enlace copiado!'}
+async function verQRCompartir(u){if(typeof QRCode=='undefined')await new Promise((r,j)=>{const s=document.createElement('script');s.src='assets/js/qrcode.min.js';s.onload=r;s.onerror=j;document.head.appendChild(s)});const c=document.getElementById('qrCompC');c.innerHTML='';new QRCode(c,{text:u,width:200,height:200});document.getElementById('qrComp').classList.remove('hidden')}
