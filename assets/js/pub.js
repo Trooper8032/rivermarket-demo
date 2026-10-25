@@ -1,6 +1,6 @@
 /* RiverMarket · generador de publicaciones (layout medido, sin superposiciones) */
 (function(){
-const ESTILOS={clasico:'Clásico',oscuro:'Oscuro',minimal:'Minimal',llamativo:'Llamativo'};
+const ESTILOS={clasico:'Clásico',oscuro:'Oscuro',minimal:'Minimal',llamativo:'Llamativo',navidad:'Navidad Clásica',navidad_elegante:'Navidad Elegante'};
 const cache={};
 function img(u){if(!u)return Promise.resolve(null);if(cache[u])return cache[u];return cache[u]=new Promise(r=>{const i=new Image();i.crossOrigin='anonymous';i.onload=()=>r(i);i.onerror=()=>r(null);i.src=/^https?:\/\//.test(u)&&u.indexOf(location.host)<0?u+(u.includes('?')?'&':'?')+'cors=1':u})}
 function rr(g,x,y,w,h,r){r=Math.min(r,w/2,h/2);g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath()}
@@ -20,11 +20,15 @@ function waIcon(g,x,y,s,fg,bg){g.save();g.fillStyle=bg;g.beginPath();g.arc(x+s/2
  g.lineWidth=s*.07;g.lineCap='round';g.beginPath();g.arc(x+s/2,y+s/2,s*.15,Math.PI*.6,Math.PI*1.4,false);g.stroke();g.restore()}
 function qrCanvas(texto,tam){const d=document.createElement('div');new QRCode(d,{text:texto,width:tam,height:tam,correctLevel:QRCode.CorrectLevel.M});return d.querySelector('canvas')}
 function paleta(est,col){const claro=lum(col)>.6;const acc=claro?mix(col,'#000000',.45):col;
+ if(est=='navidad')return{bg:'#8f1d2c',bg2:'#a7283a',tx:'#ffffff',sub:'rgba(255,255,255,.82)',acc:'#fde68a',acTx:'#7f1d1d',foot:'#14532d',footTx:'#fff',badge:'#fde68a',badgeTx:'#7f1d1d',marco:'#fde68a'};
+ if(est=='navidad_elegante')return{bg:'#0f2e25',bg2:'#173f33',tx:'#f8f5ec',sub:'#cfc6a8',acc:'#d4af37',acTx:'#0f2e25',foot:'#0a211a',footTx:'#f8f5ec',badge:'#d4af37',badgeTx:'#0f2e25',marco:'#d4af37'};
  if(est=='oscuro')return{bg:'#111827',bg2:'#1f2937',tx:'#ffffff',sub:'#cbd5e1',acc:lum(col)<.25?mix(col,'#ffffff',.5):col,acTx:'#fff',foot:'#0b1220',footTx:'#fff',badge:'#ef4444',marco:'#1f2937'};
  if(est=='minimal')return{bg:'#ffffff',bg2:'#f3f4f6',tx:'#111827',sub:'#6b7280',acc,acTx:'#fff',foot:'#f3f4f6',footTx:'#111827',badge:'#dc2626',marco:'#f3f4f6'};
  if(est=='llamativo')return{bg:acc,bg2:mix(acc,'#000000',.25),tx:'#ffffff',sub:'rgba(255,255,255,.85)',acc:'#facc15',acTx:'#111827',foot:'#111827',footTx:'#fff',badge:'#facc15',badgeTx:'#111827',marco:mix(acc,'#ffffff',.2)};
  return{bg:mix(col,'#ffffff',.9),bg2:mix(col,'#ffffff',.75),tx:'#111827',sub:'#4b5563',acc,acTx:'#fff',foot:acc,footTx:'#fff',badge:'#dc2626',marco:mix(col,'#ffffff',.8)}}
 
+function navEstrella(g,x,y,r){g.beginPath();for(let i=0;i<8;i++){const a=i*Math.PI/4,rr2=i%2?r*.35:r;g.lineTo(x+Math.cos(a)*rr2,y+Math.sin(a)*rr2)}g.closePath();g.fill()}
+function navRamas(g,W,H){const h=W*.012;g.fillStyle='#14532d';g.fillRect(0,0,W,h);g.fillRect(0,H-h,W,h);const cs=['#fde68a','#ffffff','#fbbf24'];for(let i=0,n=Math.round(W/36);i<=n;i++){g.fillStyle=cs[i%3];g.beginPath();g.arc(i*36+18,h,W*.0055,0,7);g.fill();g.beginPath();g.arc(i*36+18,H-h,W*.0055,0,7);g.fill()}}
 async function dibujar(c,o){
  const t=o.tienda,p=o.producto,[W,H]=o.formato.split('x').map(Number),vert=H>W,est=o.estilo||'clasico',P=paleta(est,t.color||'#0aad0a');
  try{await Promise.all(['600','700','800'].map(w=>document.fonts.load(F(w,40))));await document.fonts.ready}catch(e){}
@@ -33,6 +37,8 @@ async function dibujar(c,o){
  const M=Math.round(W*.06),CW=W-2*M;
  // fondo
  g.fillStyle=P.bg;g.fillRect(0,0,W,H);
+ if(est=='navidad'){g.fillStyle='rgba(255,255,255,.55)';for(let i=0;i<70;i++){const sx=(i*97.3%1)*W,sy=((i*57.1)%100)/100*H,r=W*(.002+((i*13)%5)*.0012);g.globalAlpha=.25+((i*7)%5)*.08;g.beginPath();g.arc((i*733)%W,sy,r,0,7);g.fill()}g.globalAlpha=1;navRamas(g,W,H)}
+ if(est=='navidad_elegante'){g.strokeStyle='#d4af37';g.lineWidth=Math.max(2,W*.003);const m=W*.022;g.strokeRect(m,m,W-2*m,H-2*m);g.globalAlpha=.5;g.strokeRect(m+W*.008,m+W*.008,W-2*m-W*.016,H-2*m-W*.016);g.globalAlpha=1;g.fillStyle='#d4af37';for(const [sx,sy,s] of [[.9,.04,.018],[.82,.07,.01],[.96,.1,.008],[.08,.95,.012]])navEstrella(g,W*sx,H*sy,W*s)}
  if(est=='llamativo'){g.fillStyle='rgba(255,255,255,.09)';g.beginPath();g.arc(W*.95,H*.05,W*.45,0,7);g.fill();g.beginPath();g.arc(0,H*.7,W*.3,0,7);g.fill()}
  // --- cabecera
  let y=M;const hh=Math.round(W*(vert?.11:.085));

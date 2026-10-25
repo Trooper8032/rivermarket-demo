@@ -56,7 +56,10 @@ function pie(){return `<footer class="bg-gray-100 mt-12 py-8 text-gray-600"><div
 <div><div class="font-semibold text-gray-800 mb-2">Enlaces</div><p><a href="registro.html">Vende con nosotros</a> · <a href="privacidad.html">Política de privacidad</a> · <a href="ingresar.html">Ingresar</a></p></div></div>
 <div class="container text-[11px] leading-snug mt-6 border-t border-gray-300 pt-3 text-gray-500">© 2026 RIVERGREEN SOLUTIONS E.I.R.L. · Diseño basado en <a class="underline" href="https://github.com/codescandy/freshcart-tailwind-ecommerce-HTML-template">Freshcart</a> (MIT) · Íconos Tabler (MIT) · Fotos de ejemplo: <a class="underline" href="https://unsplash.com/license">Unsplash</a></div></footer>`}
 async function montar(activo){const s=await sesion();if($('cab'))$('cab').innerHTML=cabecera(activo,s);if($('pie'))$('pie').innerHTML=pie();
-sb.from('mercado').select('valor').eq('clave','banners').maybeSingle().then(({data})=>{const b=data&&data.valor&&data.valor[0];if(b&&$('bannerTop'))$('bannerTop').innerHTML=b.enlace?`<a href="${esc(b.enlace)}">${esc(b.texto)}</a>`:esc(b.texto)});return s}
+sb.from('mercado').select('clave,valor').in('clave',['banners','tema']).then(({data})=>{const M={};(data||[]).forEach(r=>M[r.clave]=r.valor);const b=M.banners&&M.banners[0];if(b&&$('bannerTop'))$('bannerTop').innerHTML=b.enlace?`<a href="${esc(b.enlace)}">${esc(b.texto)}</a>`:esc(b.texto);
+const U=new URLSearchParams(location.search);if(U.has('navidad'))localStorage.setItem('rm_nav_preview',U.get('navidad'));const pv=localStorage.getItem('rm_nav_preview');/* vista previa local: ?navidad=1 (o 0 para quitar) */
+const T=Object.assign({},M.tema||{});if(pv=='1')T.navidad=true;if(pv=='0')delete localStorage.rm_nav_preview;window.RM_NAV=T.navidad?T:null;if(T.navidad){if(window.navAplicar)navAplicar();else{const sc=document.createElement('script');sc.src='assets/js/navidad.js';document.head.appendChild(sc)}}window.dispatchEvent(new Event('rm-tema'))});return s}
+function navBadge(p){return window.RM_NAV&&p&&(p.extra||{}).navidad?'<span class="nav-bdg">🎄 Navidad</span>':''}
 function fixClases(){document.querySelectorAll('[class*="${"]').forEach(e=>e.className=e.className.replace(/\$\{(\w+)\}/g,(m,k)=>eval(k)))}
 
 /* Compartir tienda: Web Share API en celulares + opciones WhatsApp, Facebook, copiar enlace y QR */
