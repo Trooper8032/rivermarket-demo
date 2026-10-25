@@ -53,9 +53,10 @@ sb.from('mercado').select('valor').eq('clave','banners').maybeSingle().then(({da
 function fixClases(){document.querySelectorAll('[class*="${"]').forEach(e=>e.className=e.className.replace(/\$\{(\w+)\}/g,(m,k)=>eval(k)))}
 
 /* Compartir tienda: Web Share API en celulares + opciones WhatsApp, Facebook, copiar enlace y QR */
-function linkTienda(slug){return BASE_URL+'tienda.html?t='+encodeURIComponent(slug)}
-async function compartirTienda(nombre,slug,directo=true){const url=linkTienda(slug),txt=`¡Visita ${nombre} en RiverMarket! Mira el catálogo y haz tu pedido por WhatsApp:`;
-if(directo&&navigator.share&&/Android|iPhone|iPad|Mobi/i.test(navigator.userAgent)){try{await navigator.share({title:nombre,text:txt,url});return}catch(e){if(e.name=='AbortError')return}}
+function linkTienda(slug){return BASE_URL+encodeURIComponent(slug)+'/'}
+function linkCorto(slug){return 'market.rivergreensolutions.com/'+slug}
+async function compartirTienda(nombre,slug,directo=true){const url=linkTienda(slug),txt=`¡Visita mi tienda ${nombre} en RiverMarket!`;
+if(directo&&navigator.share&&/Android|iPhone|iPad|Mobi/i.test(navigator.userAgent)){try{await navigator.share({title:nombre,text:txt+' '+url});return}catch(e){if(e.name=='AbortError')return}}
 document.getElementById('mCompartir')?.remove();const m=document.createElement('div');m.id='mCompartir';m.className='fixed inset-0 z-[100] bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4';m.onclick=e=>{if(e.target==m)m.remove()};
 const op=(ic,t,cls,act)=>`<button class="w-full flex items-center gap-3 rounded-xl border border-gray-200 px-4 py-3 hover:bg-gray-50 text-left" onclick="${act}"><span class="w-10 h-10 rounded-full grid place-items-center ${cls}"><i class="ti ${ic} text-[22px]"></i></span><span class="font-semibold text-gray-800">${t}</span></button>`;
 m.innerHTML=`<div class="bg-white w-full sm:max-w-sm rounded-t-2xl sm:rounded-2xl p-5"><div class="flex justify-between items-center mb-1"><h3 class="text-lg font-bold">Compartir tienda</h3><button onclick="this.closest('#mCompartir').remove()" class="text-gray-500"><i class="ti ti-x text-[22px]"></i></button></div><p class="text-sm text-gray-500 mb-4">${esc(nombre)}</p><div class="space-y-2">

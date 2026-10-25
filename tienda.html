@@ -9,7 +9,7 @@
 <div id="pie"></div>
 <script>fixClases();montar('');let T,PS=[],VAL={},cat='Todas',C,dp;const P=i=>PS.find(x=>x.id==i);
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e;inst.classList.remove('hidden')});if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');
-(async()=>{const U=new URLSearchParams(location.search),slug=U.get('t');
+(async()=>{const U=new URLSearchParams(location.search),slug=U.get('t')||window.RM_SLUG;
 const {data:t}=await sb.from('tiendas').select('*').eq('slug',slug).maybeSingle();
 if(!t){thw.innerHTML='<section class="container my-16 text-center"><h1 class="text-xl">Tienda no encontrada</h1><p class="my-3">Puede que no exista o esté en revisión.</p><a class="text-green-600" href="directorio.html">Ver tiendas</a></section>';fab.remove();return}
 T=t;if(U.has('preview')){try{Object.assign(T,JSON.parse(localStorage.getItem('rm_preview')||'{}'))}catch(e){}}

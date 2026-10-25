@@ -1,0 +1,23 @@
+name: Links cortos de tiendas
+on:
+  schedule: [{cron: '*/10 * * * *'}]
+  workflow_dispatch:
+  repository_dispatch: {types: [tienda-nueva]}
+  push: {branches: [main], paths: ['tienda.html', 'scripts/gen_slugs.py']}
+permissions: {contents: write}
+concurrency: {group: links-tiendas, cancel-in-progress: false}
+jobs:
+  generar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: pip install -q pillow
+      - run: python scripts/gen_slugs.py
+        env: {SUPABASE_ANON_KEY: '${{ secrets.SUPABASE_ANON_KEY }}'}
+      - run: |
+          git add -A
+          if git diff --cached --quiet; then echo "Sin cambios"; exit 0; fi
+          git -c user.name=Trooper8032 -c user.email=Trooper8032@users.noreply.github.com commit -m "Links cortos: actualizar páginas de tiendas"
+          git push

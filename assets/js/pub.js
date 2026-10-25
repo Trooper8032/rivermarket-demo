@@ -2,7 +2,7 @@
 (function(){
 const ESTILOS={clasico:'Clásico',oscuro:'Oscuro',minimal:'Minimal',llamativo:'Llamativo'};
 const cache={};
-function img(u){if(!u)return Promise.resolve(null);if(cache[u])return cache[u];return cache[u]=new Promise(r=>{const i=new Image();i.crossOrigin='anonymous';i.onload=()=>r(i);i.onerror=()=>r(null);i.src=u})}
+function img(u){if(!u)return Promise.resolve(null);if(cache[u])return cache[u];return cache[u]=new Promise(r=>{const i=new Image();i.crossOrigin='anonymous';i.onload=()=>r(i);i.onerror=()=>r(null);i.src=/^https?:\/\//.test(u)&&u.indexOf(location.host)<0?u+(u.includes('?')?'&':'?')+'cors=1':u})}
 function rr(g,x,y,w,h,r){r=Math.min(r,w/2,h/2);g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath()}
 function hex2rgb(h){h=(h||'#0aad0a').replace('#','');if(h.length==3)h=h.split('').map(c=>c+c).join('');const n=parseInt(h,16);return[n>>16&255,n>>8&255,n&255]}
 function mix(h,t,a){const c=hex2rgb(h),d=hex2rgb(t);return'rgb('+c.map((v,i)=>Math.round(v*(1-a)+d[i]*a)).join(',')+')'}
