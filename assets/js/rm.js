@@ -38,7 +38,7 @@ async function subirPublico(blob,carpeta='img',ext='jpg'){const {data:{user}}=aw
 async function sesion(){const {data:{session}}=await sb.auth.getSession();return session}
 async function perfil(){const s=await sesion();if(!s)return null;const {data}=await sb.from('perfiles').select('*').eq('id',s.user.id).maybeSingle();return data}
 function cabecera(activo,s){const l=(h,t,k)=>`<a href="${h}" class="px-2 md:px-3 py-2 rounded-lg font-medium whitespace-nowrap ${activo==k?'text-green-600':'text-gray-800 hover:text-green-600'}">${t}</a>`;
-return `<div id="bannerTop" class="bg-gray-100 text-sm py-1 text-center text-gray-600">🎁 Vende con nosotros: 1 mes gratis con soporte del sistema</div>
+return `<div id="bannerTop" class="bg-gray-100 text-sm py-1 text-center text-gray-600">🎁 Vende con nosotros: 15 días gratis con soporte del sistema</div>
 <header class="border-b border-gray-200 bg-white sticky top-0 z-30"><div class="container flex items-center justify-between h-16 gap-2">
 <a href="index.html" class="flex items-center gap-2 text-lg font-bold text-gray-800"><img src="img/logo-rivermarket.png" alt="RiverMarket" class="h-10 w-auto"><span class="hidden sm:inline"><span style="color:#1E4FA8">River</span><span style="color:#6DBE45">Market</span></span></a>
 <nav class="flex items-center text-base">${l('directorio.html','Tiendas','dir')}${s?l('panel.html','<i class="ti ti-layout-dashboard"></i> <span class="hidden md:inline">Mi panel</span>','panel'):l('ingresar.html','Ingresar','ing')}
