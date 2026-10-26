@@ -4,7 +4,7 @@
 <button onclick="abrir()" id="fab" class="fixed bottom-4 right-4 z-30 ${BTN} tb shadow-lg !rounded-full !px-5 !py-3 hidden"><i class="ti ti-shopping-cart text-lg"></i> <span id="cn">0</span> · <span id="tt">S/ 0.00</span></button>
 <div id="pie"></div>
 <script>fixClases();montar('');let T,PR,PS=[];const P=i=>PS.find(x=>x.id==i);let est=5;
-(async()=>{const id=new URLSearchParams(location.search).get('id');const {data:p}=await sb.from('productos').select('*,tiendas(*)').eq('id',id).maybeSingle();
+(async()=>{const id=new URLSearchParams(location.search).get('id');const ok=/^[0-9a-f-]{36}$/i.test(id||'');const {data:p}=ok?await sb.from('productos').select('*,tiendas(*)').eq('id',id).maybeSingle():{data:null};
 if(!p){main.innerHTML='<div class="text-center my-16"><h1 class="text-xl">Producto no disponible</h1><a class="text-green-600" href="directorio.html">Ver tiendas</a></div>';return}
 PR=p;T=p.tiendas;PS=[p];document.title=p.nombre+' · '+T.nombre;const col=T.color||'#0aad0a';
 document.head.insertAdjacentHTML('beforeend',`<style>.tb{background:${col}!important;border-color:${col}!important;color:#fff!important}</style>`);
