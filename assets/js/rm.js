@@ -21,7 +21,8 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const $=id=>document.getElementById(id);
 function src(v){return !v?'assets/images/demo/sin-foto.svg':v}
 function cfg(t){return{estilo:t.estilo||'clasica',vista:t.vista||'grid',bienvenida:t.bienvenida||'',secc:Object.assign({},SECC_DEF,t.secc||{})}}
-function logoHTML(t,cls,icls){return t.logo?`<img src="${esc(t.logo)}" alt="" class="${cls} object-cover bg-white">`:`<div class="${cls} grid place-items-center text-white" style="background:${esc(t.color||'#0aad0a')}"><i class="ti ${esc(t.icono||'ti-building-store')} ${icls}"></i></div>`}
+const DEMO_LOGOS=['unas-bella','taller-mecanico-rapido','andes-viajes','sazon-criollo','dulce-hogar','tecno-punto','verde-vivo','moda-urbana'];
+function logoHTML(t,cls,icls){if(!t.logo&&DEMO_LOGOS.includes(t.slug))t={...t,logo:'assets/images/demo/logos/'+t.slug+'.webp'};return t.logo?`<img src="${esc(t.logo)}" alt="" class="${cls} object-cover bg-white">`:`<div class="${cls} grid place-items-center text-white" style="background:${esc(t.color||'#0aad0a')}"><i class="ti ${esc(t.icono||'ti-building-store')} ${icls}"></i></div>`}
 function descuento(p){return p.precio_antes&&+p.precio_antes>+p.precio?Math.round((1-p.precio/p.precio_antes)*100):0}
 function precioValido(v){const s=String(v??'').trim().replace(',','.');if(!/^\d+(\.\d{1,2})?$/.test(s))return null;const n=parseFloat(s);return n>0?n:null}
 function rucValido(r){r=String(r).trim();if(!/^(10|15|17|20)\d{9}$/.test(r))return false;const w=[5,4,3,2,7,6,5,4,3,2];let s=0;for(let i=0;i<10;i++)s+=+r[i]*w[i];let dv=11-s%11;if(dv==10)dv=0;if(dv==11)dv=1;return dv==+r[10]}

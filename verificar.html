@@ -77,4 +77,5 @@ const w=twa.value.replace(/\D/g,'');const tipoN=document.querySelector('[name=tt
 const checks={dni_nitido:!!CH.dni_nitido,reverso_nitido:!!CH.reverso_nitido,rostro_dni:!!CH.rostro_dni,vida:!!CH.vida,vida_metodo:CH.vida_metodo||null,rostro_coincide:!!CH.rostro_coincide,distancia:CH.distancia??null,calidad_frente:CH.dni_calidad,calidad_reverso:CH.reverso_calidad};
 const {data,error}=await sb.rpc('registrar_tienda',{t,v:{dni:tdni.value,dni_frente:pf,dni_reverso:pr,selfie:ps,checks,puntaje:puntaje(),acepto:true}});if(error)throw error;
 location.href='panel.html?nueva='+data.estado}catch(e){b4.disabled=false;b4.innerHTML='<i class="ti ti-send"></i> Crear mi tienda';e4.textContent=errTxt(e)}}
+;try{if(localStorage.getItem('rm_tipo')=='servicios'){const r=document.querySelector('[name=ttipo][value=servicios]');if(r){r.checked=true;window.rubSel&&rubSel()}}}catch(e){}
 </script></body></html>
