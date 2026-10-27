@@ -1,8 +1,10 @@
 // Service worker simple: red primero, caché como respaldo sin conexión.
-const C='rivermarket-v10';
+const C='rivermarket-v11';
 self.addEventListener('install',e=>self.skipWaiting());
 self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));
-self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(fetch(e.request).then(r=>{const c=r.clone();caches.open(C).then(x=>x.put(e.request,c)).catch(()=>{});return r}).catch(()=>caches.match(e.request)))});
+self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;
+// Modelos de IA (pesados): no duplicarlos en esta caché; cada herramienta guarda los suyos.
+if(/huggingface\.co|hf\.co|xethub|tessdata|tesseract|onnxruntime|@huggingface\/transformers/.test(e.request.url))return;e.respondWith(fetch(e.request).then(r=>{const c=r.clone();caches.open(C).then(x=>x.put(e.request,c)).catch(()=>{});return r}).catch(()=>caches.match(e.request)))});
 // Notificaciones push del administrador (tienda nueva).
 self.addEventListener('push',e=>{let d={};try{d=e.data.json()}catch(_){d={title:'RiverMarket',body:e.data?e.data.text():''}}
 e.waitUntil(self.registration.showNotification(d.title||'RiverMarket',{body:d.body||'',icon:'/img/apple-touch-icon.png',badge:'/img/favicon-32.png',tag:d.tag,renotify:true,data:{url:d.url||'/admin.html?estado=revision'}}))});
