@@ -1,5 +1,5 @@
 // Service worker simple: red primero, caché como respaldo sin conexión.
-const C='rivermarket-v11';
+const C='rivermarket-v12';
 self.addEventListener('install',e=>self.skipWaiting());
 self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));
 self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;

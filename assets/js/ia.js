@@ -25,7 +25,7 @@ const st=document.createElement('style');st.textContent=`
 .ia-box{border:2px dashed #16a34a;background:#f0fdf4;border-radius:14px;padding:12px;margin-bottom:14px}
 .ia-mic{display:inline-flex;align-items:center;gap:8px;background:#16a34a;color:#fff;font-weight:700;border-radius:999px;padding:10px 18px;font-size:16px}
 .ia-mic.rec{background:#dc2626;animation:iaP 1.2s infinite}@keyframes iaP{50%{box-shadow:0 0 0 10px rgba(220,38,38,.15)}}
-.ia-hint{font-size:14px;color:#166534;margin-top:6px}.ia-sub{font-size:13px;color:#4b5563}
+.ia-hint{font-size:14px;color:#166534;margin-top:6px}.ia-sub{font-size:13px;color:#4b5563}.ia-guia{background:#fff;border:1px solid #bbf7d0;border-radius:12px;padding:10px;margin-top:10px}.ia-guia h4{font-size:16px;font-weight:700;color:#14532d;margin:0 0 6px}.ia-gf{display:flex;align-items:flex-start;gap:8px;font-size:16px;line-height:1.35;padding:7px 8px;border-radius:10px;margin:3px 0;border:2px solid #e5e7eb;background:#f9fafb}.ia-gf .n{flex:0 0 26px;height:26px;border-radius:50%;background:#e5e7eb;color:#374151;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:14px}.ia-gf b{display:block}.ia-gf small{display:block;font-size:14px;color:#6b7280}.ia-gf.ok{border-color:#16a34a;background:#dcfce7}.ia-gf.ok .n{background:#16a34a;color:#fff}.ia-gf.falta{border-color:#f59e0b;background:#fef3c7}.ia-gf.falta .n{background:#f59e0b;color:#fff}.ia-gf .v{font-size:14px;color:#14532d;font-weight:600}.ia-gf.falta .v{color:#92400e}.ia-ej{font-size:15px;background:#ecfdf5;border-left:4px solid #16a34a;padding:8px 10px;border-radius:8px;margin-top:8px;color:#14532d}.ia-falta{font-size:16px;font-weight:700;color:#92400e;background:#fef3c7;border:2px solid #f59e0b;border-radius:10px;padding:8px 10px;margin-top:8px}.ia-vivo{font-size:14px;color:#4b5563;font-style:italic;margin-top:6px}
 .ia-bar{height:8px;background:#e5e7eb;border-radius:9px;overflow:hidden;margin:6px 0}.ia-bar>div{height:8px;background:#16a34a;width:0;transition:width .2s}
 .ia-res{background:#fff;border:1px solid #bbf7d0;border-radius:10px;padding:10px;margin-top:10px;font-size:14px}
 .ia-res b{color:#111827}.ia-tag{display:inline-block;font-size:12px;font-weight:700;border-radius:6px;padding:2px 8px}
@@ -131,6 +131,7 @@ function entender(original,serv){
   res.descripcion=serv?`${res.nombre}${res.duracion?' ('+res.duracion+')':''}. ${g.frase||'Atención con cariño y puntualidad.'} Reserva tu cita en ${tienda}.`.replace(/\s+/g,' ')
     :`${res.nombre}${res.tamano?' de '+res.tamano:''}. ${g.frase||'Producto de calidad.'} Pídelo en ${tienda}.`.replace(/\s+/g,' ');
   res.caracteristicas=res.tamano?['Tamaño: '+res.tamano]:[];
+  {const tl=t.match(/\btalla\s+([a-z0-9]{1,4})\b/i);if(tl)res.caracteristicas.push('Talla: '+tl[1].toUpperCase());const co=t.match(/\bcolor\s+([a-záéíóúñ]{3,15})\b/i);if(co)res.caracteristicas.push('Color: '+co[1].toLowerCase())}
   return res}
 IA.entender=entender;
 
@@ -158,21 +159,44 @@ async function audioA16k(blob){const buf=await blob.arrayBuffer();const AC=windo
   return new Float32Array(d)}
 IA.audioA16k=audioA16k;IA.transcribir=transcribir;
 let REC=null,RECt=null;
+function camposGuia(sv){return sv?[
+  {k:'nombre',t:'Nombre del servicio',ej:'Manicure con gel'},
+  {k:'precio',t:'Precio',ej:'35 soles'},
+  {k:'duracion',t:'Duración',ej:'una hora'},
+  {k:'categoria',t:'Categoría',ej:'uñas'},
+  {k:'detalle',t:'Detalles (opcional)',ej:'incluye diseño',op:1}]:[
+  {k:'nombre',t:'Nombre',ej:'Polo de algodón azul'},
+  {k:'precio',t:'Precio',ej:'25 soles'},
+  {k:'stock',t:'Stock (cantidad)',ej:'hay 10'},
+  {k:'categoria',t:'Categoría',ej:'ropa'},
+  {k:'detalle',t:'Descripción: talla, color, material, tamaño (opcional)',ej:'talla M'}]}
+function valorCampo(p,k){if(!p)return '';if(k=='nombre')return p.nombre&&p.nombre.length>1?p.nombre:'';if(k=='precio')return p.precio?soles(p.precio):'';if(k=='stock')return p.stock!=null?p.stock+' en stock':'';if(k=='duracion')return p.duracion||'';
+  if(k=='categoria')return p.nombre&&p.nombre.length>1?p.categoria||'':'';if(k=='detalle'){if(p.tamano)return p.tamano;if(p.caracteristicas&&p.caracteristicas.length)return p.caracteristicas.join(', ');const m=String(p.texto||'').match(/\b(talla\s+\w+|color\s+\w+|de\s+(?:algod[oó]n|cuero|madera|metal|pl[aá]stico|vidrio|lana|seda))\b/i);return m?m[1]:''}return ''}
+function pintarGuia(p,fin){const sv=esServ(),cs=camposGuia(sv),g=$i('iaGuia');if(!g)return;const faltan=[];
+  g.innerHTML=`<h4><i class="ti ti-list-check"></i> ${fin?'Esto entendimos':(REC?'Te escuchamos… di estos datos en orden':'Al dictar, di estos datos en orden')}</h4>`+cs.map((c,i)=>{const v=valorCampo(p,c.k),est=v?'ok':(fin&&!c.op?'falta':'');if(est=='falta')faltan.push(c.t.toLowerCase().replace(/ \(.*/,''));
+    return `<div class="ia-gf ${est}" data-campo="${c.k}"><span class="n">${v?'✓':i+1}</span><div><b>${c.t}</b>${v?`<span class="v">${E(v)}</span>`:est=='falta'?'<span class="v">Falta: dilo otra vez o escríbelo abajo</span>':`<small>Ej.: ${c.ej}</small>`}</div></div>`}).join('')+
+  (fin&&faltan.length?`<div class="ia-falta"><i class="ti ti-alert-triangle"></i> Falta: ${faltan.join(', ')}. Toca el micrófono y dilo otra vez, o escríbelo en el formulario.</div>`:'')+
+  (!fin||faltan.length?`<div class="ia-ej"><b>Di por ejemplo:</b> “${sv?'Manicure con gel, precio 35 soles, una hora, categoría uñas':'Polo azul de algodón, precio 25 soles, hay 10, categoría ropa, talla M'}”</div>`:'')}
+IA.pintarGuia=pintarGuia;
 function cajaDictar(){const sv=esServ();
   return `<div class="ia-box" id="iaDict"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><button type="button" class="ia-mic" id="iaMic" onclick="IA.mic()"><i class="ti ti-microphone"></i> <span>Dictar ${sv?'servicio':'producto'}</span></button><label class="ia-sub" style="text-decoration:underline;cursor:pointer">o sube un audio<input type="file" accept="audio/*" id="iaAud" class="hidden"></label><span class="ia-beta">NUEVO</span></div>
-  <div class="ia-hint"><i class="ti ti-bulb"></i> ${sv?'Di: servicio, duración y precio. Ej.: “Manicure con gel, una hora, treinta y cinco soles”':'Di: nombre, precio y cantidad. Ej.: “Torta de chocolate, un kilo, cuarenta y cinco soles, hay diez”'}</div><div id="iaDst"></div><div id="iaDres"></div></div>`}
+  <div class="ia-guia" id="iaGuia"></div><div id="iaVivo" class="ia-vivo"></div><div id="iaDst"></div><div id="iaDres"></div></div>`}
+// transcripción parcial mientras graba (solo si el asistente ya está descargado, para no gastar datos dos veces)
+let PARC=false;async function parcial(ch,tipo){if(PARC||!WW||!IA.med.whisperCarga||!ch.length)return;PARC=true;
+  try{const a=await audioA16k(new Blob(ch,{type:tipo}));const r=await transcribir(a);if(REC){const p=entender(r.text,esServ());pintarGuia(p,false);const v=$i('iaVivo');if(v)v.textContent='“'+r.text.trim()+'”'}}catch(e){}PARC=false}
+IA.parcial=parcial;
 IA.mic=async()=>{const b=$i('iaMic');
   if(REC){REC.stop();return}
   if(!navigator.mediaDevices||!window.MediaRecorder){aviso('Tu celular no permite grabar aquí. Usa “o sube un audio”.');return}
   let s;try{s=await navigator.mediaDevices.getUserMedia({audio:true})}catch(e){aviso('Necesitamos permiso para usar el micrófono.');return}
   const ch=[];REC=new MediaRecorder(s);REC.ondataavailable=e=>e.data.size&&ch.push(e.data);
   REC.onstop=()=>{s.getTracks().forEach(t=>t.stop());clearInterval(RECt);REC=null;b.classList.remove('rec');b.querySelector('span').textContent='Dictar '+(esServ()?'servicio':'producto');procesarAudio(new Blob(ch,{type:ch[0]&&ch[0].type||'audio/webm'}))};
-  REC.start();b.classList.add('rec');let n=0;b.querySelector('span').textContent='Detener (0 s)';RECt=setInterval(()=>{n++;b.querySelector('span').textContent=`Detener (${n} s)`;if(n>=20&&REC)REC.stop()},1000)};
+  REC.start(1000);b.classList.add('rec');$i('iaDres').innerHTML='';$i('iaVivo').textContent='';pintarGuia(null,false);let n=0;b.querySelector('span').textContent='Detener (0 s)';RECt=setInterval(()=>{n++;b.querySelector('span').textContent=`Detener (${n} s)`;if(n>=20&&REC)REC.stop();else if(n%3==0)parcial(ch.slice(),REC.mimeType||'audio/webm')},1000)};
 async function procesarAudio(blob){const st=$i('iaDst'),rs=$i('iaDres');rs.innerHTML='';IA.onProg=(t,p)=>progreso(st,t,p);progreso(st,'Preparando…',null);
   try{const t0=performance.now();const a=await audioA16k(blob);IA.med.audioSeg=a.length/16000;
     if(!WW||!IA.med.whisperCarga)progreso(st,'Descargando el asistente de voz (solo la 1.ª vez)…',2);else progreso(st,'Escuchando tu audio…',null);
     const r=await transcribir(a);IA.med.transcribirMs=r.ms;IA.med.totalMs=performance.now()-t0;IA.med.texto=r.text;
-    const p=entender(r.text,esServ());IA.ultimo=p;st.innerHTML='';llenarForm(p);mostrarEntendido(p)}
+    const p=entender(r.text,esServ());IA.ultimo=p;st.innerHTML='';llenarForm(p);mostrarEntendido(p);pintarGuia(p,true);const v=$i('iaVivo');if(v)v.textContent=''}
   catch(e){console.error(e);progreso(st,'<span style="color:#b91c1c">No pudimos escuchar el audio. Intenta de nuevo o escribe los datos.</span>',null)}}
 IA.procesarAudio=procesarAudio;
 function llenarForm(p){if(p.nombre)pnom.value=p.nombre;if(p.categoria)pcat.value=p.categoria;if(p.precio)ppre.value=(+p.precio).toFixed(2);
@@ -308,7 +332,7 @@ IA.usarFoto=()=>{const f=FT[IA.fi];if(!f||!IA.fblob)return;f.blobSF=IA.fblob;f.u
 /* =====================================================================
    Conexión con el panel
    ===================================================================== */
-IA.enModal=()=>{const old=$i('iaDict');if(old)old.remove();if(typeof EF!='undefined'&&EF)return;const s1=$i('s1');if(!s1)return;s1.insertAdjacentHTML('beforebegin',cajaDictar());$i('iaAud').onchange=e=>{const f=e.target.files[0];if(f)procesarAudio(f)}};
+IA.enModal=()=>{const old=$i('iaDict');if(old)old.remove();if(typeof EF!='undefined'&&EF)return;const s1=$i('s1');if(!s1)return;s1.insertAdjacentHTML('beforebegin',cajaDictar());pintarGuia(null,false);$i('iaAud').onchange=e=>{const f=e.target.files[0];if(f)procesarAudio(f)}};
 IA.botonLista=()=>{const h=document.querySelector('#t0 .flex.justify-between');if(!h||$i('iaBL'))return;h.style.flexWrap='wrap';h.style.gap='10px';const g=document.createElement('div');g.className='flex flex-wrap gap-2';g.style.width='100%';h.appendChild(g);const add=h.querySelector('button');g.appendChild(add);
   g.insertAdjacentHTML('afterbegin',`<button id="iaBL" class="${BTNO}" onclick="IA.lista()"><i class="ti ti-camera"></i> Foto de mi lista de precios</button>`)};
 })();
