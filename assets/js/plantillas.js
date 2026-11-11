@@ -108,7 +108,7 @@ secs.map((s,i)=>{const l=sec(s);return l.length?`<div id="sec-${i}" style="scrol
 function renderPlantilla(T,PS,VAL){const col=T.color||'#0aad0a';document.head.insertAdjacentHTML('beforeend',plCSS(col));
 ['thw','bv','tpiew','fab','pie'].forEach(i=>{const e=document.getElementById(i);if(e)e.style.display='none'});const s=document.getElementById('g');if(s)s.closest('section').style.display='none';
 const w=document.createElement('div');w.className='pl';w.id='pl';document.getElementById('cab').after(w);
-const k=T.plantilla||'catalogo',f={catalogo:plTienda,servicios:plServicios,turismo:plTurismo,restaurante:plRestaurante}[k];if(k=='catalogo')document.head.insertAdjacentHTML('beforeend',plCSS2());w.innerHTML=f(T,PS,VAL);if(k=='catalogo'){plTiendaInit(T,PS,VAL);return}
+const k=T.plantilla||'catalogo';if(k=='desayunos'&&window.plDesayunos){w.innerHTML=plDesayunos(T,PS);kdInit(T,PS);return}const f={catalogo:plTienda,servicios:plServicios,turismo:plTurismo,restaurante:plRestaurante}[k];if(k=='catalogo')document.head.insertAdjacentHTML('beforeend',plCSS2());w.innerHTML=f(T,PS,VAL);if(k=='catalogo'){plTiendaInit(T,PS,VAL);return}
 if(T.plantilla=='restaurante'){window.rc=()=>{const car=carLeer(T.id),n=Object.entries(car).reduce((a,[i,k])=>a+(P(i)?k:0),0);plbar.style.display=n?'flex':'none';plbn.textContent=n;plbt.textContent=soles(total())};
 const tabs=[...document.querySelectorAll('.pl-tabs a')];addEventListener('scroll',()=>{let on=0;tabs.forEach((a,i)=>{const el=document.querySelector(a.getAttribute('href'));if(el&&el.getBoundingClientRect().top<120)on=i});tabs.forEach((a,i)=>a.classList.toggle('on',i==on))},{passive:true})}
 else plModal()}

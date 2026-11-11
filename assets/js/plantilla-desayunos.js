@@ -1,0 +1,175 @@
+/* RiverMarket · Plantilla "Desayunos y regalos" (desayunos sorpresa, regalos personalizados).
+   Reutilizable por cualquier tienda con plantilla='desayunos'. Datos:
+   - productos: categoria 'Desayunos' (combos) o 'Adicionales'; extra:{codigo, incluye[], opcion:{etiqueta,valores[]}, incluidos:{'AD-001':1}}
+   - tiendas.info: eslogan, hero_titulo, hero_sub, redes{facebook}, horario[[dia,horas]], mismo_dia(bool),
+     delivery:{distritos:[{distrito,cobertura,tarifa,disponible,obs}], promo_gratis(bool)}, yape:{numero,titular,qr}, fotos_referenciales(bool)
+   Pedido: se envía por WhatsApp (no registra venta ni pago). */
+if(typeof PLANTILLAS!=='undefined')PLANTILLAS.desayunos='Desayunos y regalos';
+const KD={S:{combo:null,opc:'',ad:{}}};
+function kdHoy(){try{return new Intl.DateTimeFormat('en-CA',{timeZone:'America/Lima',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())}catch(e){return new Date().toISOString().slice(0,10)}}
+function kdS(n){n=Math.round(Number(n||0)*100)/100;return 'S/'+(n%1?n.toFixed(2):String(n))}
+function kdFecha(f){if(!f)return '';const [y,m,d]=f.split('-');return d+'/'+m+'/'+y}
+function kdDistritos(T){const D=((T.info||{}).delivery||{}).distritos||[];return D.filter(x=>x&&x.distrito&&x.cobertura!==false&&x.disponible!==false)}
+function kdTarifa(T,dis){const x=kdDistritos(T).find(d=>d.distrito==dis);if(!x)return null;const t=x.tarifa;if(t===0&&((T.info||{}).delivery||{}).promo_gratis)return 0;return (typeof t=='number'&&t>0)?t:null}
+function kdDeliveryTxt(T,dis){const t=kdTarifa(T,dis);return t===null?'Por confirmar según distrito':t===0?'Gratis (promoción)':kdS(t)}
+function kdCSS(){return `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&display=swap"><style>
+.kd{--b:#780B20;--v:#A61C35;--g:#C69B5D;--cr:#F7EDE2;font-family:Inter,system-ui,sans-serif;color:#3b2a2d;background:#fff}
+.kd h1,.kd h2,.kd h3,.kd .serif{font-family:'Playfair Display',Georgia,serif;color:var(--b);letter-spacing:-.01em}
+.kd a{color:inherit}.kd .w{max-width:1140px;margin:0 auto;padding:0 18px}.kd .sec{padding:56px 0}.kd .cr{background:var(--cr)}
+.kd .eyb{font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--g)}.kd .h2{font-size:28px;font-weight:700;margin:6px 0 10px;line-height:1.15}@media(min-width:768px){.kd .h2{font-size:36px}}
+.kd .sub{color:#6b5458;max-width:640px}
+.kd .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:700;border-radius:999px;padding:13px 22px;border:2px solid var(--b);background:var(--b);color:#fff!important;text-decoration:none;cursor:pointer;font-size:15px;transition:.2s}.kd .btn:hover{background:var(--v);border-color:var(--v)}
+.kd .btn.o{background:transparent;color:var(--b)!important}.kd .btn.o:hover{background:var(--b);color:#fff!important}.kd .btn.wa{background:#1fa855;border-color:#1fa855}.kd .btn.wa:hover{background:#178a45;border-color:#178a45}.kd .btn.gd{background:var(--g);border-color:var(--g)}.kd .btn.sm{padding:9px 16px;font-size:14px}
+.kd-nav{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);border-bottom:1px solid #f0e2d6}.kd-nav .w{display:flex;align-items:center;gap:14px;height:66px}
+.kd-nav .brand{display:flex;align-items:center;gap:10px;text-decoration:none}.kd-nav .brand img{width:44px;height:44px;border-radius:50%}.kd-nav .brand b{font-family:'Playfair Display',serif;font-size:22px;color:var(--b)}
+.kd-nav .lk{display:none;gap:22px;margin-left:auto}.kd-nav .lk a{font-weight:600;font-size:14px;text-decoration:none;color:#5a3b40}.kd-nav .lk a:hover{color:var(--v)}@media(min-width:960px){.kd-nav .lk{display:flex}}
+.kd-nav .fb{margin-left:auto;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:#1877F2;color:#fff!important;font-size:22px;text-decoration:none}@media(min-width:960px){.kd-nav .fb{margin-left:8px}}
+.kd-hero{position:relative;background:var(--cr);overflow:hidden}.kd-hero .ph{position:absolute;inset:0}.kd-hero picture img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:right center}@media(max-width:767px){.kd-hero .ph{position:relative;aspect-ratio:1/1}.kd-hero picture img{object-position:center}.kd-hero .ov{display:none}}
+.kd-hero .ov{position:absolute;inset:0;background:linear-gradient(90deg,rgba(247,237,226,.97) 0%,rgba(247,237,226,.9) 38%,rgba(247,237,226,.15) 70%,transparent)}
+
+.kd-hero .in{position:relative;padding:70px 0 70px;max-width:560px}@media(max-width:767px){.kd-hero .in{padding:26px 0 34px}}
+.kd-hero h1{font-size:36px;font-weight:800;line-height:1.08;margin:12px 0 14px}@media(min-width:768px){.kd-hero h1{font-size:52px}}
+.kd-hero p{font-size:17px;line-height:1.6;color:#5a3b40}.kd-hero .cta{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.kd-ref{position:absolute;right:10px;bottom:10px;font-size:11px;background:rgba(255,255,255,.85);color:#5a3b40;border-radius:999px;padding:3px 9px}
+.kd-trust{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:-1px}@media(min-width:900px){.kd-trust{grid-template-columns:repeat(4,1fr)}}
+.kd-trust div{display:flex;gap:10px;align-items:center;background:#fff;border:1px solid #f0e2d6;border-radius:16px;padding:14px;font-size:14px;font-weight:600;color:#5a3b40}.kd-trust i{font-size:24px;color:var(--v)}
+.kd-g4{display:grid;gap:22px;grid-template-columns:1fr}@media(min-width:640px){.kd-g4{grid-template-columns:repeat(2,1fr)}}@media(min-width:1100px){.kd-g4{grid-template-columns:repeat(4,1fr)}}
+.kd-card{background:#fff;border:1px solid #f0e2d6;border-radius:22px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 24px rgba(120,11,32,.06);transition:.2s}.kd-card:hover{transform:translateY(-3px);box-shadow:0 18px 40px rgba(120,11,32,.12)}
+.kd-card .im{position:relative;aspect-ratio:4/3;background:var(--cr)}.kd-card .im img{width:100%;height:100%;object-fit:cover}
+.kd-code{position:absolute;top:12px;left:12px;background:var(--b);color:#fff;font-size:11px;font-weight:700;letter-spacing:.08em;border-radius:999px;padding:4px 10px}
+.kd-card .bd{padding:18px;display:flex;flex-direction:column;gap:8px;flex:1}.kd-card h3{font-size:21px;font-weight:700}.kd-card p{font-size:14px;color:#6b5458;line-height:1.5;flex:1}
+.kd-pr{font-family:'Playfair Display',serif;font-size:28px;font-weight:800;color:var(--v)}.kd-card .bt{display:flex;gap:8px;flex-wrap:wrap}.kd-card .bt .btn{flex:1;padding:10px 12px;font-size:14px}
+.kd-g6{display:grid;gap:16px;grid-template-columns:repeat(2,1fr)}@media(min-width:768px){.kd-g6{grid-template-columns:repeat(3,1fr)}}@media(min-width:1100px){.kd-g6{grid-template-columns:repeat(6,1fr)}}
+.kd-ad{background:#fff;border:1px solid #f0e2d6;border-radius:18px;overflow:hidden;text-align:center;display:flex;flex-direction:column}.kd-ad img{aspect-ratio:1;object-fit:cover;width:100%}.kd-ad .bd{padding:12px;display:flex;flex-direction:column;gap:6px;flex:1}
+.kd-ad b{font-size:15px;color:#3b2a2d}.kd-ad .p{font-weight:800;color:var(--v)}.kd-ad small{font-size:11px;color:#8a7074}
+.kd-q{display:inline-flex;align-items:center;border:1px solid #e8d5c4;border-radius:999px;overflow:hidden;margin:auto auto 0}.kd-q button{width:34px;height:34px;border:0;background:var(--cr);color:var(--b);font-size:18px;font-weight:700;cursor:pointer}.kd-q span{min-width:30px;font-weight:700}
+.kd-form{display:grid;gap:24px;grid-template-columns:1fr}@media(min-width:960px){.kd-form{grid-template-columns:1.4fr 1fr}}
+.kd-box{background:#fff;border:1px solid #f0e2d6;border-radius:22px;padding:22px}.kd-box h3{font-size:20px;font-weight:700;margin-bottom:12px}
+.kd label{display:block;font-size:13px;font-weight:700;color:#5a3b40;margin:12px 0 5px}.kd label .r{color:var(--v)}
+.kd input,.kd select,.kd textarea{width:100%;border:1px solid #e8d5c4;border-radius:12px;padding:11px 12px;font-size:15px;background:#fffdfb;color:#3b2a2d}.kd input:focus,.kd select:focus,.kd textarea:focus{outline:2px solid var(--g);border-color:var(--g)}
+.kd .row2{display:grid;gap:0 14px;grid-template-columns:1fr}@media(min-width:640px){.kd .row2{grid-template-columns:1fr 1fr}}
+.kd-alert{border-radius:14px;padding:12px 14px;font-size:14px;margin-top:10px;display:flex;gap:10px;align-items:flex-start}.kd-alert.g{background:#fbf3e6;border:1px solid var(--g);color:#6b4a1c}.kd-alert.r{background:#fdecee;border:1px solid #f3b9c2;color:#8a1730}.kd-alert i{font-size:20px}
+.kd-sum{position:sticky;top:84px}.kd-sum .l{display:flex;justify-content:space-between;gap:10px;padding:7px 0;font-size:14px;border-bottom:1px dashed #eedccd}.kd-sum .l.t{font-size:18px;font-weight:800;color:var(--b);border:0}
+.kd-yape{display:flex;gap:14px;align-items:center}.kd-yape .lg{width:56px;height:56px;border-radius:16px;background:#742284;color:#fff;display:grid;place-items:center;font-weight:800;font-size:15px;flex:none}
+.kd-steps{display:grid;gap:14px;grid-template-columns:1fr}@media(min-width:900px){.kd-steps{grid-template-columns:repeat(5,1fr)}}.kd-steps div{background:#fff;border:1px solid #f0e2d6;border-radius:18px;padding:18px}.kd-steps b{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:var(--b);color:#fff;margin-bottom:10px}
+.kd details{background:#fff;border:1px solid #f0e2d6;border-radius:16px;padding:16px 18px;margin-bottom:10px}.kd summary{font-weight:700;cursor:pointer;color:var(--b);list-style:none;display:flex;justify-content:space-between}.kd summary::after{content:'+';font-size:22px;line-height:1}.kd details[open] summary::after{content:'–'}.kd details p{margin-top:10px;color:#6b5458}
+.kd-ft{background:var(--b);color:#f7edE2;padding:40px 0 90px}.kd-ft a{color:#fff}.kd-ft h3{color:#fff}
+.kd-dlg{position:fixed;inset:0;z-index:60;background:rgba(40,10,16,.6);display:none;align-items:flex-end;justify-content:center}@media(min-width:768px){.kd-dlg{align-items:center}}.kd-dlg.on{display:flex}
+.kd-dlg .c{background:#fff;border-radius:22px 22px 0 0;max-width:760px;width:100%;max-height:92vh;overflow:auto}@media(min-width:768px){.kd-dlg .c{border-radius:22px}}.kd-dlg img{width:100%;aspect-ratio:4/3;object-fit:cover}
+.kd-dlg ul{margin:10px 0 0;padding:0;list-style:none}.kd-dlg li{padding:6px 0;display:flex;gap:8px}.kd-dlg li i{color:var(--g)}
+.kd-bar{position:fixed;left:0;right:0;bottom:0;z-index:40;background:#fff;border-top:1px solid #f0e2d6;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 -8px 24px rgba(0,0,0,.06)}@media(min-width:960px){.kd-bar{display:none}}
+.kd .err{color:#b4233c;font-size:13px;margin-top:4px}.kd .muted{font-size:13px;color:#8a7074}
+</style>`}
+function kdImg(src,alt,cls){return `<img src="${esc(src||'assets/images/demo/sin-foto.svg')}" alt="${esc(alt)}" loading="lazy" decoding="async" ${cls?`class="${cls}"`:''}>`}
+function plDesayunos(T,PS){const I=T.info||{},col=T.color||'#780B20',fb=(I.redes||{}).facebook,ref=I.fotos_referenciales;
+const C=PS.filter(p=>p.categoria!='Adicionales'),A=PS.filter(p=>p.categoria=='Adicionales');
+const waG=plWA(T)+'?text='+encodeURIComponent('Hola, '+T.nombre+'. Quisiera información sobre sus desayunos sorpresa.');
+const fbIc=fb?`<a class="fb" href="${esc(fb)}" target="_blank" rel="noopener" aria-label="Facebook de ${esc(T.nombre)}" title="Facebook"><i class="ti ti-brand-facebook-filled"></i></a>`:'';
+const refTag=ref?'<span class="kd-ref">Imagen referencial</span>':'';
+const hoy=kdHoy(),D=kdDistritos(T),y=I.yape||{};
+return kdCSS()+`<div class="kd">
+<nav class="kd-nav"><div class="w"><a class="brand" href="${T.slug}/#inicio"><img src="${esc(T.logo)}" alt="Logotipo de ${esc(T.nombre)}"><b>${esc(T.nombre)}</b></a>
+<div class="lk"><a href="${T.slug}/#desayunos">Desayunos</a><a href="${T.slug}/#adicionales">Adicionales</a><a href="${T.slug}/#pedido">Pedido</a><a href="${T.slug}/#como-comprar">Cómo comprar</a><a href="${T.slug}/#preguntas">Preguntas</a><a href="${T.slug}/#contacto">Contacto</a></div>${fbIc}</div></nav>
+<header class="kd-hero" id="inicio"><div class="ph"><picture><source media="(max-width:767px)" srcset="${esc(I.portada_movil||T.portada)}"><img src="${esc(T.portada)}" alt="Desayuno sorpresa en caja decorada" fetchpriority="high"></picture>${refTag}</div><div class="ov"></div>
+<div class="w"><div class="in"><span class="eyb">${esc(T.nombre)} · Desayunos sorpresa en ${esc(T.ciudad)}</span><h1>${esc(I.hero_titulo||T.nombre)}</h1><p>${esc(I.hero_sub||T.descripcion)}</p>
+<div class="cta"><a class="btn" href="${T.slug}/#desayunos"><i class="ti ti-gift"></i> Ver desayunos</a><a class="btn wa" href="${waG}" target="_blank" rel="noopener"><i class="ti ti-brand-whatsapp"></i> Pedir por WhatsApp</a></div></div></div></header>
+<div class="cr" style="padding:18px 0"><div class="w kd-trust"><div><i class="ti ti-map-pin-heart"></i><span>Entregas en ${esc(T.ciudad)}, según distrito</span></div><div><i class="ti ti-calendar-heart"></i><span>${I.mismo_dia!==false?'Pedidos para el mismo día, sujetos a disponibilidad':'Pedidos con anticipación'}</span></div><div><i class="ti ti-wallet"></i><span>Pago con Yape tras confirmar tu pedido</span></div><div><i class="ti ti-heart-handshake"></i><span>Tarjeta personalizada en todos los combos</span></div></div></div>
+<section class="sec" id="desayunos"><div class="w"><span class="eyb">Nuestros desayunos</span><h2 class="h2">Elige la sorpresa perfecta</h2><p class="sub">${esc(I.eslogan||'')}</p>
+<div class="kd-g4" style="margin-top:26px">${C.map(p=>{const x=p.extra||{};return `<article class="kd-card"><div class="im">${kdImg(p.fotos[0],p.nombre+': '+(x.incluye||[]).join(', '))}<span class="kd-code">${esc(x.codigo||'')}</span>${refTag}</div><div class="bd"><h3>${esc(p.nombre)}</h3><span class="kd-pr">${kdS(p.precio)}</span><p>${esc(p.descripcion)}</p><div class="bt"><button class="btn o" onclick="kdVer('${p.id}')">Ver detalles</button><button class="btn" onclick="kdElegir('${p.id}')">Personalizar pedido</button></div></div></article>`}).join('')}</div>
+${ref?'<p class="muted" style="margin-top:14px"><i class="ti ti-info-circle"></i> Las fotos son referenciales y muestran el contenido de cada combo. La presentación final puede variar.</p>':''}</div></section>
+<section class="sec cr" id="adicionales"><div class="w"><span class="eyb">Complementos</span><h2 class="h2">Hazlo aún más especial</h2><p class="sub">Agrega detalles a cualquier desayuno. Elige la cantidad y se suma a tu subtotal.</p>
+<div class="kd-g6" style="margin-top:24px">${A.map(p=>`<div class="kd-ad">${kdImg(p.fotos[0],p.nombre)}<div class="bd"><small>${esc((p.extra||{}).codigo||'')}</small><b>${esc(p.nombre)}</b><span class="p">${kdS(p.precio)}</span><span class="muted" id="kdinc-${p.id}"></span><div class="kd-q"><button aria-label="Quitar ${esc(p.nombre)}" onclick="kdAd('${p.id}',-1)">−</button><span id="kdq-${p.id}" aria-live="polite">0</span><button aria-label="Agregar ${esc(p.nombre)}" onclick="kdAd('${p.id}',1)">+</button></div></div></div>`).join('')}</div></div></section>
+<section class="sec" id="pedido"><div class="w"><span class="eyb">Tu pedido</span><h2 class="h2">Personaliza tu sorpresa</h2><p class="sub">Completa los datos y envía tu solicitud por WhatsApp. El pedido queda pendiente hasta que ${esc(T.nombre)} confirme disponibilidad, delivery e importe final.</p>
+<div class="kd-form" style="margin-top:24px"><form id="kdf" novalidate><div class="kd-box"><h3>1. Tu desayuno</h3>
+<label for="kdc">Combo seleccionado <span class="r">*</span></label><select id="kdc" required><option value="">Elige un desayuno</option>${C.map(p=>`<option value="${p.id}">${esc(p.nombre)} — ${kdS(p.precio)}</option>`).join('')}</select>
+<div id="kdow"></div><div id="kdinc" class="muted" style="margin-top:8px"></div>
+<label>Adicionales</label><div id="kdadl" class="muted">Ninguno. Puedes agregarlos en la sección <a href="javascript:void 0" onclick="document.getElementById('adicionales').scrollIntoView({behavior:'smooth'})" style="color:var(--v);font-weight:700">Complementos</a>.</div></div>
+<div class="kd-box" style="margin-top:18px"><h3>2. Entrega</h3><div class="row2"><div><label for="kdfe">Fecha de entrega solicitada <span class="r">*</span></label><input type="date" id="kdfe" min="${hoy}" required></div><div><label for="kdho">Horario preferido</label><input type="time" id="kdho"></div></div>
+<div id="kdmd"></div>
+<div class="row2"><div><label for="kddi">Distrito de ${esc(T.ciudad)} <span class="r">*</span></label><select id="kddi" required><option value="">Elige el distrito</option>${D.map(d=>`<option>${esc(d.distrito)}</option>`).join('')}<option value="__otro">${D.length?'Otro distrito (consultar cobertura)':'Escribir mi distrito (cobertura por confirmar)'}</option></select><input id="kddo" placeholder="Escribe tu distrito" style="display:none;margin-top:8px"></div>
+<div><label>Delivery</label><div id="kddv" style="padding:11px 0;font-weight:700;color:var(--b)">Por confirmar según distrito</div><div id="kddobs" class="muted"></div></div></div>
+<label for="kddir">Dirección de entrega <span class="r">*</span></label><input id="kddir" autocomplete="street-address" required>
+<label for="kdref">Referencia de ubicación</label><input id="kdref" placeholder="Ej.: frente al parque, puerta marrón"></div>
+<div class="kd-box" style="margin-top:18px"><h3>3. Datos y dedicatoria</h3><div class="row2"><div><label for="kdcn">Tu nombre <span class="r">*</span></label><input id="kdcn" autocomplete="name" required></div><div><label for="kdct">Teléfono de contacto <span class="r">*</span></label><input id="kdct" type="tel" inputmode="numeric" maxlength="12" placeholder="9 dígitos" autocomplete="tel" required></div></div>
+<label for="kdde">Nombre del destinatario <span class="r">*</span></label><input id="kdde" required>
+<label for="kdmsg">Dedicatoria (va en la tarjeta personalizada)</label><textarea id="kdmsg" rows="3" maxlength="300" placeholder="Escribe tu mensaje"></textarea>
+<label for="kdobs">Observaciones</label><textarea id="kdobs" rows="2" maxlength="300"></textarea>
+<label for="kdal">Alergias o restricciones alimentarias (si corresponde)</label><input id="kdal" maxlength="200" placeholder="Ej.: sin lactosa"></div>
+<div id="kderr" class="kd-alert r" style="display:none" role="alert"></div>
+<button type="submit" class="btn wa" style="width:100%;margin-top:18px;padding:16px"><i class="ti ti-brand-whatsapp"></i> Solicitar mi sorpresa por WhatsApp</button>
+<p class="muted" style="margin-top:8px;text-align:center">Abrir WhatsApp no confirma la venta ni registra un pago. ${esc(T.nombre)} te responderá para confirmar.</p></form>
+<aside><div class="kd-box kd-sum"><h3>Resumen</h3><div id="kdres"></div>
+<div class="kd-box" style="margin-top:16px;background:#fcf7f2"><div class="kd-yape"><div class="lg">yape</div><div><b style="color:#3b2a2d">Pago con Yape</b><div class="muted">Medio de pago confirmado</div></div></div>
+<ol style="margin:12px 0 0 18px;font-size:14px;line-height:1.6;color:#5a3b40;list-style:decimal"><li>Envía tu solicitud por WhatsApp.</li><li>Espera la confirmación de disponibilidad, delivery e importe final.</li><li>Recién entonces paga con Yape.</li><li>Informa tu número de operación; el pago se marca como recibido cuando ${esc(T.nombre)} lo valida.</li></ol>
+<div style="margin-top:12px;font-size:14px">${y.numero?`<b>Número Yape:</b> ${esc(y.numero)}${y.titular?' · '+esc(y.titular):''}`:'<span class="muted">Los datos de Yape se envían al confirmar tu pedido.</span>'}${y.qr?`<img src="${esc(y.qr)}" alt="Código QR de Yape" style="width:160px;margin-top:8px;border-radius:12px">`:''}</div>
+<div style="margin-top:10px;font-size:14px"><b>Estado del pago:</b> <span style="color:#8a5a12;font-weight:700">Pendiente</span> <span class="muted">(se paga después de la confirmación)</span></div>
+<label for="kdop">¿Ya pagaste? N.º de operación Yape</label><input id="kdop" inputmode="numeric" maxlength="20" placeholder="Solo el número de operación"><button type="button" class="btn o sm" style="margin-top:8px;width:100%" onclick="kdInformar()"><i class="ti ti-receipt"></i> Informar pago por WhatsApp</button>
+<p class="muted" style="margin-top:6px">No envíes claves ni datos de tu tarjeta. Solo el número de operación.</p></div></div></aside></div></div></section>
+<section class="sec cr" id="como-comprar"><div class="w"><span class="eyb">Cómo comprar</span><h2 class="h2">Tu sorpresa en 5 pasos</h2><div class="kd-steps" style="margin-top:20px">
+${['Elige tu desayuno favorito.','Personaliza tu sorpresa con complementos y dedicatoria.','Indica fecha, horario y distrito de entrega en '+T.ciudad+'.','Consulta disponibilidad y costo de delivery por WhatsApp.','Coordina el pago mediante Yape después de la confirmación.'].map((s,i)=>`<div><b>${i+1}</b><p>${esc(s)}</p></div>`).join('')}</div></div></section>
+<section class="sec" id="preguntas"><div class="w" style="max-width:820px"><span class="eyb">Preguntas frecuentes</span><h2 class="h2">Resolvemos tus dudas</h2><div style="margin-top:18px">
+${(I.faq||[]).map(f=>`<details><summary>${esc(f[0])}</summary><p>${esc(f[1])}</p></details>`).join('')}</div></div></section>
+<section class="sec cr" id="contacto"><div class="w" style="display:flex;flex-wrap:wrap;gap:24px;justify-content:space-between;align-items:center"><div><span class="eyb">Contacto</span><h2 class="h2">${esc(T.nombre)}</h2><p class="sub">${esc(I.especialidad||T.rubro)} · ${esc(T.ciudad)}, Perú</p>
+${(I.horario||[]).length?`<p class="sub">${I.horario.map(h=>esc(h[0])+': '+esc(h[1])).join('<br>')}</p>`:''}</div>
+<div style="display:flex;flex-wrap:wrap;gap:10px"><a class="btn wa" href="${waG}" target="_blank" rel="noopener"><i class="ti ti-brand-whatsapp"></i> +51 ${esc(String(T.wa).slice(2).replace(/(\d{3})(\d{3})(\d{3})/,'$1 $2 $3'))}</a>${fb?`<a class="btn" style="background:#1877F2;border-color:#1877F2" href="${esc(fb)}" target="_blank" rel="noopener"><i class="ti ti-brand-facebook-filled"></i> Facebook</a>`:''}</div></div></section>
+<footer class="kd-ft"><div class="w" style="display:flex;flex-wrap:wrap;gap:18px;justify-content:space-between;align-items:center"><div><h3 style="font-size:22px">${esc(T.nombre)}</h3><p style="opacity:.85">${esc(I.eslogan||'')}</p></div>
+<div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">${fb?`<a href="${esc(fb)}" target="_blank" rel="noopener" aria-label="Facebook"><i class="ti ti-brand-facebook-filled" style="font-size:24px"></i></a>`:''}<a href="directorio.html" style="font-weight:700">Tienda en RiverMarket · ver más tiendas <i class="ti ti-arrow-right"></i></a></div></div></footer>
+<div class="kd-bar" id="kdbar"><span><b id="kdbt">S/0</b><br><small class="muted">Subtotal</small></span><a class="btn wa sm" href="${T.slug}/#pedido"><i class="ti ti-brand-whatsapp"></i> Pedir</a></div>
+<div class="kd-dlg" id="kddlg" onclick="if(event.target==this)kdCerrar()" role="dialog" aria-modal="true"><div class="c" id="kddc"></div></div></div>`}
+function kdInit(T,PS){window.KD_T=T;window.KD_PS=PS;const g=id=>document.getElementById(id);
+g('kdc').onchange=()=>{KD.S.combo=g('kdc').value||null;KD.S.opc='';kdPintar()};g('kdfe').oninput=kdPintar;g('kddi').onchange=kdPintar;g('kddo').oninput=kdPintar;
+g('kdf').onsubmit=e=>{e.preventDefault();const r=kdValidar();if(r.length){g('kderr').style.display='flex';g('kderr').innerHTML='<i class="ti ti-alert-circle"></i><div>Completa: '+r.map(esc).join(', ')+'.</div>';return}g('kderr').style.display='none';const u=kdLink();window.KD_ULTIMO=u;window.open(u,'_blank','noopener')};
+document.querySelectorAll('.kd a[href*="/#"]').forEach(a=>a.addEventListener('click',e=>{const id=a.getAttribute('href').split('#')[1],el=g(id);if(el){e.preventDefault();el.scrollIntoView({behavior:'smooth'});history.replaceState(null,'','#'+id)}}));
+addEventListener('keydown',e=>{if(e.key=='Escape')kdCerrar()});const h=location.hash.slice(1);if(h&&g(h))setTimeout(()=>g(h).scrollIntoView(),50);kdPintar()}
+function kdP(id){return KD_PS.find(p=>p.id==id)}
+function kdVer(id){const p=kdP(id),x=p.extra||{};document.getElementById('kddc').innerHTML=`${kdImg(p.fotos[0],p.nombre)}<div style="padding:22px"><span class="eyb">${esc(x.codigo||'')}</span><h3 style="font-size:26px;font-weight:700">${esc(p.nombre)}</h3><div class="kd-pr">${kdS(p.precio)}</div><p style="margin-top:8px;color:#6b5458;line-height:1.6">${esc(p.descripcion)}</p><h4 style="margin-top:16px;font-weight:700;color:#3b2a2d">Incluye</h4><ul>${(x.incluye||[]).map(i=>`<li><i class="ti ti-heart-filled"></i>${esc(i)}</li>`).join('')}</ul>${x.opcion?`<p class="muted" style="margin-top:10px">${esc(x.opcion.etiqueta)}: ${x.opcion.valores.map(esc).join(' o ')}${x.opcion.nota?' ('+esc(x.opcion.nota)+')':''}.</p>`:''}${KD_T.info.fotos_referenciales?'<p class="muted" style="margin-top:8px">Imagen referencial.</p>':''}<div style="display:flex;gap:10px;margin-top:18px"><button class="btn o" onclick="kdCerrar()">Cerrar</button><button class="btn" style="flex:1" onclick="kdCerrar();kdElegir('${p.id}')">Personalizar pedido</button></div></div>`;document.getElementById('kddlg').classList.add('on')}
+function kdCerrar(){const d=document.getElementById('kddlg');d&&d.classList.remove('on')}
+function kdElegir(id){KD.S.combo=id;KD.S.opc='';document.getElementById('kdc').value=id;kdPintar();document.getElementById('pedido').scrollIntoView({behavior:'smooth'})}
+function kdAd(id,d){const n=Math.max(0,Math.min(20,(KD.S.ad[id]||0)+d));if(n)KD.S.ad[id]=n;else delete KD.S.ad[id];kdPintar()}
+function kdCalc(){const c=KD.S.combo&&kdP(KD.S.combo),ads=Object.entries(KD.S.ad).map(([id,q])=>({p:kdP(id),q})).filter(a=>a.p);
+const sub=Math.round(((c?+c.precio:0)+ads.reduce((s,a)=>s+a.p.precio*a.q,0))*100)/100;return{c,ads,sub}}
+function kdDistrito(){const v=document.getElementById('kddi').value;return v=='__otro'?document.getElementById('kddo').value.trim():v}
+function kdPintar(){const g=id=>document.getElementById(id),T=KD_T,{c,ads,sub}=kdCalc();
+const x=c&&c.extra||{};g('kdow').innerHTML=x.opcion?`<label for="kdop1">${esc(x.opcion.etiqueta)}</label><select id="kdop1">${x.opcion.valores.map(v=>`<option ${KD.S.opc==v?'selected':''}>${esc(v)}</option>`).join('')}</select>${x.opcion.nota?`<div class="muted">${esc(x.opcion.nota)}</div>`:''}`:'';
+if(x.opcion){if(!KD.S.opc)KD.S.opc=x.opcion.valores[0];g('kdop1').onchange=e=>{KD.S.opc=e.target.value;kdPintar()}}
+g('kdinc').innerHTML=c?'<b>Incluye:</b> '+(x.incluye||[]).map(esc).join(' · '):'';
+KD_PS.filter(p=>p.categoria=='Adicionales').forEach(p=>{const q=g('kdq-'+p.id);if(q)q.textContent=KD.S.ad[p.id]||0;const inc=(x.incluidos||{})[(p.extra||{}).codigo];const e=g('kdinc-'+p.id);if(e)e.textContent=inc?`Tu combo ya incluye ${inc}. Aquí agregas extra.`:''});
+g('kdadl').innerHTML=ads.length?ads.map(a=>`<div style="display:flex;justify-content:space-between"><span>${esc(a.p.nombre)} × ${a.q}</span><b>${kdS(a.p.precio*a.q)}</b></div>`).join(''):`Ninguno. Puedes agregarlos en <a href="javascript:void 0" onclick="document.getElementById('adicionales').scrollIntoView({behavior:'smooth'})" style="color:var(--v);font-weight:700">Complementos</a>.`;
+const f=g('kdfe').value,hoy=kdHoy();g('kdmd').innerHTML=f&&f==hoy?'<div class="kd-alert g" role="status"><i class="ti ti-sun"></i><div><b>¿Quieres sorprender hoy?</b> Aceptamos pedidos para el mismo día sujetos a disponibilidad. Confirma tu pedido por WhatsApp.</div></div>':f&&f<hoy?'<div class="kd-alert r"><i class="ti ti-alert-circle"></i><div>Elige una fecha de hoy en adelante.</div></div>':'';
+g('kddo').style.display=g('kddi').value=='__otro'?'block':'none';const dis=kdDistrito(),dt=kdDeliveryTxt(T,dis),tf=kdTarifa(T,dis);g('kddv').textContent=dt;const dd=kdDistritos(T).find(d=>d.distrito==dis);g('kddobs').textContent=dd&&dd.obs?dd.obs:'';
+g('kdres').innerHTML=`<div class="l"><span>${c?esc(c.nombre)+(KD.S.opc?' ('+esc(KD.S.opc)+')':''):'<span class="muted">Elige un desayuno</span>'}</span><b>${c?kdS(c.precio):''}</b></div>${ads.map(a=>`<div class="l"><span>${esc(a.p.nombre)} × ${a.q}</span><b>${kdS(a.p.precio*a.q)}</b></div>`).join('')}<div class="l t"><span>Subtotal</span><span id="kdsub">${kdS(sub)}</span></div><div class="l"><span>Delivery</span><b>${esc(dt)}</b></div><div class="l"><span>Total</span><b>${tf===null?'Por confirmar':kdS(sub+tf)+' <span class="muted">(estimado, sujeto a confirmación)</span>'}</b></div>`;
+g('kdbt').textContent=kdS(sub)}
+function kdValidar(){const g=id=>document.getElementById(id).value.trim(),r=[];if(!KD.S.combo)r.push('combo');if(!g('kdcn'))r.push('tu nombre');const t=g('kdct').replace(/\D/g,'');if(!/^9\d{8}$/.test(t.replace(/^51/,'')))r.push('teléfono (9 dígitos)');if(!g('kdde'))r.push('destinatario');const f=g('kdfe');if(!f||f<kdHoy())r.push('fecha de entrega');if(!kdDistrito())r.push('distrito');if(!g('kddir'))r.push('dirección');return r}
+function kdMensaje(){const g=id=>document.getElementById(id).value.trim(),T=KD_T,{c,ads,sub}=kdCalc(),f=g('kdfe'),dis=kdDistrito(),x=c.extra||{};
+const L=['Hola, '+T.nombre+'. Quisiera realizar un pedido de desayuno sorpresa.','',
+'Producto: '+c.nombre+(x.codigo?' ('+x.codigo+')':'')+(KD.S.opc?' – '+x.opcion.etiqueta+': '+KD.S.opc:''),'Precio: '+kdS(c.precio),
+'Adicionales: '+(ads.length?ads.map(a=>a.p.nombre+' x'+a.q+' ('+kdS(a.p.precio*a.q)+')').join(', '):'Ninguno'),'Subtotal: '+kdS(sub),'Delivery: '+kdDeliveryTxt(T,dis),
+'Fecha solicitada: '+kdFecha(f)+(f==kdHoy()?' (mismo día)':''),'Horario preferido: '+(g('kdho')||'Por coordinar'),'Distrito: '+dis,'Dirección: '+g('kddir')+(g('kdref')?' (Ref.: '+g('kdref')+')':''),
+'Destinatario: '+g('kdde'),'Dedicatoria: '+(g('kdmsg')||'—'),'Comprador: '+g('kdcn')+' – '+g('kdct')];
+if(g('kdobs'))L.push('Observaciones: '+g('kdobs'));if(g('kdal'))L.push('Alergias o restricciones: '+g('kdal'));
+L.push('Medio de pago: Yape','','¿Podrían confirmarme la disponibilidad, el delivery y el importe final?');return L.join('\n')}
+function kdLink(){return plWA(KD_T)+'?text='+encodeURIComponent(kdMensaje())}
+function kdInformar(){const op=document.getElementById('kdop').value.replace(/\D/g,'');if(!op){document.getElementById('kdop').focus();return}const g=id=>document.getElementById(id).value.trim();
+const m='Hola, '+KD_T.nombre+'. Ya realicé el pago por Yape de mi pedido confirmado'+(g('kdde')?' para '+g('kdde'):'')+(g('kdfe')?' del '+kdFecha(g('kdfe')):'')+'.\nN.º de operación: '+op+'\n¿Me confirman cuando lo validen? Gracias.';window.open(plWA(KD_T)+'?text='+encodeURIComponent(m),'_blank','noopener')}
+/* ===== Panel (reusa "Mi tienda" > Modelo de página y el editor de productos) ===== */
+function kdPanelInfo(I){const d=I.delivery||{},y=I.yape||{},L_=(id,l,v,ph)=>`<label class="block text-sm font-semibold text-gray-800 mb-1 mt-3">${l}</label><input id="${id}" class="border border-gray-300 rounded-lg w-full p-2" value="${esc(v??'')}" placeholder="${ph||''}">`;
+const fil=(d.distritos||[]).map(x=>[x.distrito,x.cobertura===false?'no':'sí',x.tarifa==null?'':x.tarifa,x.disponible===false?'no':'sí',x.obs||''].join(' | ')).join('\n');
+return `<div class="rounded-lg border border-gray-300 p-3 my-3"><b class="text-gray-800">Desayunos: delivery, Yape y pedidos</b>
+${L_('kdphe','Título de portada',I.hero_titulo,'Sorprende con amor…')}${L_('kdphs','Subtítulo de portada',I.hero_sub)}${L_('kdpesl','Eslogan',I.eslogan)}
+<label class="block text-sm font-semibold text-gray-800 mb-1 mt-3">Distritos y tarifas de delivery (uno por línea)</label><textarea id="kdpdis" rows="5" class="border border-gray-300 rounded-lg w-full p-2 font-mono text-sm" placeholder="Distrito | Cobertura (sí/no) | Tarifa S/ (vacío = por confirmar) | Disponible (sí/no) | Observaciones">${esc(fil)}</textarea>
+<p class="text-sm text-gray-500">Solo aparecen los distritos con cobertura y disponibles. Sin tarifa se muestra "Delivery: Por confirmar según distrito".</p>
+<label class="flex items-center gap-2 mt-2"><input type="checkbox" id="kdppro" ${d.promo_gratis?'checked':''}> Promoción de delivery gratis (solo distritos con tarifa 0)</label>
+<label class="flex items-center gap-2 mt-2"><input type="checkbox" id="kdpmd" ${I.mismo_dia!==false?'checked':''}> Aceptar solicitudes para el mismo día (sujetas a confirmación)</label>
+${L_('kdpyn','Yape: número receptor (opcional)',y.numero,'Déjalo vacío para enviarlo al confirmar')}${L_('kdpyt','Yape: titular (opcional)',y.titular)}${L_('kdpyq','Yape: link de la imagen QR oficial (opcional)',y.qr,'https://…')}
+<label class="flex items-center gap-2 mt-2"><input type="checkbox" id="kdpref" ${I.fotos_referenciales?'checked':''}> Marcar fotos como "Imagen referencial"</label></div>`}
+function kdPanelLeer(I){const g=id=>document.getElementById(id),si=v=>!/^\s*no\s*$/i.test(v||'');
+I.hero_titulo=g('kdphe').value.trim().slice(0,120);I.hero_sub=g('kdphs').value.trim().slice(0,300);I.eslogan=g('kdpesl').value.trim().slice(0,80);
+I.delivery={promo_gratis:g('kdppro').checked,distritos:g('kdpdis').value.split('\n').map(l=>l.split('|').map(x=>x.trim())).filter(c=>c[0]).slice(0,60).map(c=>{const t=String(c[2]||'').replace(',','.');return{distrito:c[0].slice(0,60),cobertura:si(c[1]),tarifa:/^\d+(\.\d{1,2})?$/.test(t)?+t:null,disponible:si(c[3]),obs:(c[4]||'').slice(0,120)}})};
+I.mismo_dia=g('kdpmd').checked;const n=g('kdpyn').value.replace(/\D/g,'');I.yape={numero:/^9\d{8}$/.test(n)?n:'',titular:g('kdpyt').value.trim().slice(0,60),qr:/^https:\/\//.test(g('kdpyq').value.trim())?g('kdpyq').value.trim():''};I.fotos_referenciales=g('kdpref').checked}
+function kdPanelProd(x){const o=x.opcion||{},I_=(id,l,v,ph)=>`<label class="block text-sm font-semibold text-gray-800 mb-1 mt-3">${l}</label><input id="${id}" class="border border-gray-300 rounded-lg w-full p-2" value="${esc(v??'')}" placeholder="${ph||''}">`;
+return `<div class="grid grid-cols-2 gap-3"><div>${I_('kdxcod','Código',x.codigo,'KL-005')}</div><div><label class="block text-sm font-semibold text-gray-800 mb-1 mt-3">Tipo</label><select id="kdxtip" class="border border-gray-300 rounded-lg w-full p-2"><option value="Desayunos">Desayuno / combo</option><option value="Adicionales" ${x.adicional?'selected':''}>Adicional</option></select></div></div>
+<label class="block text-sm font-semibold text-gray-800 mb-1 mt-3">Incluye (uno por línea)</label><textarea id="kdxinc" rows="5" class="border border-gray-300 rounded-lg w-full p-2">${esc((x.incluye||[]).join('\n'))}</textarea>
+<div class="grid grid-cols-2 gap-3"><div>${I_('kdxoe','Opción a elegir (opcional)',o.etiqueta,'Sabor del keke')}</div><div>${I_('kdxov','Valores (separados por coma)',(o.valores||[]).join(', '),'Chocolate, Vainilla')}</div></div>`}
+function kdPanelProdLeer(){const g=id=>document.getElementById(id),tip=g('kdxtip').value,vals=g('kdxov').value.split(',').map(x=>x.trim()).filter(Boolean),ex={codigo:g('kdxcod').value.trim().slice(0,20)};
+if(tip=='Adicionales')ex.adicional=true;else{ex.incluye=g('kdxinc').value.split('\n').map(x=>x.trim()).filter(Boolean).slice(0,20);if(g('kdxoe').value.trim()&&vals.length)ex.opcion={etiqueta:g('kdxoe').value.trim(),valores:vals}}
+return{tipo:'producto',stock:999,categoria:tip,extra:ex}}

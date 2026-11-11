@@ -114,6 +114,9 @@ def main():
     for t in ts:
         s = (t.get('slug') or '').lower()
         if not re.fullmatch(r'[a-z0-9-]+', s) or s in RESERVADOS: continue
+        idx = os.path.join(R, s, 'index.html')
+        if os.path.exists(idx) and 'rm:pagina-propia' in open(idx, encoding='utf-8').read():
+            print('tienda', s, '(página propia: se conserva)'); continue
         print('tienda', s)
         os.makedirs(os.path.join(R, s), exist_ok=True)
         og_imagen(t, os.path.join(R, 'img/og', s + '.jpg'))
