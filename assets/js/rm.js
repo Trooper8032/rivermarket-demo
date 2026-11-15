@@ -7,7 +7,7 @@ const BTNO='btn inline-flex items-center justify-center gap-x-2 bg-white text-gr
 const BTNR='btn inline-flex items-center justify-center gap-x-2 bg-white text-red-600 border-red-300 hover:bg-red-50';
 const WAC='btn inline-flex items-center justify-center gap-x-2 bg-[#25d366] text-white border-[#25d366] hover:bg-[#1ebe5b] hover:text-white';
 /* Fase 0 (rama): Turnstile de prueba oficial y alta de pedido por función de servidor. No desplegar aún. */
-const RM_TURNSTILE_SITEKEY='1x00000000000000000000AA';
+const RM_TURNSTILE_SITEKEY='0x4AAAAAAF_LKHhgFjFfXCFa';
 function rmIdempotencia(k){const key='rm_idem_'+k;try{let v=sessionStorage.getItem(key);if(!v){v=(crypto.randomUUID&&crypto.randomUUID())||('id'+Date.now());sessionStorage.setItem(key,v)}return v}catch(e){return 'id'+Date.now()}}
 function rmDisponible(p){return Math.max(0,(+p.stock||0)-(+p.reservado||0))}
 function rmCargarTurnstile(el){if(!el)return;const go=()=>{if(window.turnstile&&!el.dataset.ready){el.dataset.ready='1';window.turnstile.render(el,{sitekey:RM_TURNSTILE_SITEKEY,callback:tok=>{window.rmTurnstileToken=tok}})}};if(window.turnstile)return go();if(!document.getElementById('rm-turnstile-js')){const s=document.createElement('script');s.id='rm-turnstile-js';s.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';s.async=true;s.onload=go;document.head.appendChild(s)}else setTimeout(go,300)}
