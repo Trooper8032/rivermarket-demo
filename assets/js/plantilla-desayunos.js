@@ -9,9 +9,9 @@ const KD={S:{cart:[]}};
 function kdHoy(){try{return new Intl.DateTimeFormat('en-CA',{timeZone:'America/Lima',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())}catch(e){return new Date().toISOString().slice(0,10)}}
 function kdS(n){n=Math.round(Number(n||0)*100)/100;return 'S/'+(n%1?n.toFixed(2):String(n))}
 function kdFecha(f){if(!f)return '';const [y,m,d]=f.split('-');return d+'/'+m+'/'+y}
-function kdDistritos(T){const D=((T.info||{}).delivery||{}).distritos||[];return D.filter(x=>x&&x.distrito&&x.cobertura!==false&&x.disponible!==false)}
-function kdTarifa(T,dis){const x=kdDistritos(T).find(d=>d.distrito==dis);if(!x)return null;const t=x.tarifa;if(t===0&&((T.info||{}).delivery||{}).promo_gratis)return 0;return (typeof t=='number'&&t>0)?t:null}
-function kdDeliveryTxt(T,dis){const t=kdTarifa(T,dis);return t===null?'Por confirmar según distrito':t===0?'Gratis (promoción)':kdS(t)}
+function kdDistritos(T){return rmDelDistritos(T)}
+function kdTarifa(T,dis){const r=rmDelTarifa(T,dis);return r.estado=='calculado'?r.costo:r.estado=='gratis'?0:null}
+function kdDeliveryTxt(T,dis){const r=rmDelTarifa(T,dis);return rmDelTexto(r.estado,r.costo)}
 function kdCobTxt(T){return ((T.info||{}).delivery||{}).toda_ciudad?'Delivery a todo '+T.ciudad+' · costo según distrito':'Entregas en '+T.ciudad+', según distrito'}
 function kdTel(n){n=String(n||'').replace(/\D/g,'');return /^9\d{8}$/.test(n)?'+51 '+n.replace(/(\d{3})(\d{3})(\d{3})/,'$1 $2 $3'):n}
 function kdCSS(){return `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&display=swap"><style>
@@ -107,7 +107,7 @@ ${(ref||C.some(p=>(p.extra||{}).foto_referencial))?'<p class="muted" style="marg
 <div class="kd-form" style="margin-top:24px"><form id="kdf" novalidate><div class="kd-box"><h3>1. Tu carrito</h3><div id="kdfl"></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><a class="btn o sm" href="${T.slug}/#desayunos"><i class="ti ti-plus"></i> Agregar desayunos</a><button type="button" class="btn sm" onclick="kdCarrito(true)"><i class="ti ti-shopping-bag"></i> Ver carrito</button></div></div>
 <div class="kd-box" style="margin-top:18px"><h3>2. Entrega <small class="muted" style="font-weight:600">(opcional)</small></h3><div class="row2"><div><label for="kdfe">Fecha de entrega solicitada</label><input type="date" id="kdfe" min="${hoy}"></div><div><label for="kdho">Horario preferido</label><input type="time" id="kdho"></div></div>
 <div id="kdmd"></div>
-<div class="row2"><div><label for="kddi">Distrito de ${esc(T.ciudad)}</label><select id="kddi"><option value="">Elige el distrito</option>${D.map(d=>`<option>${esc(d.distrito)}</option>`).join('')}<option value="__otro">${D.length?'Otro distrito (consultar cobertura)':(((I.delivery||{}).toda_ciudad)?'Escribir mi distrito':'Escribir mi distrito (cobertura por confirmar)')}</option></select><input id="kddo" placeholder="Escribe tu distrito" style="display:none;margin-top:8px"></div>
+<div class="row2"><div><label for="kddi">Distrito de ${esc(T.ciudad)}</label><select id="kddi"><option value="">Elige el distrito</option>${D.map(d=>`<option>${esc(d.distrito)}</option>`).join('')}${(!rmDelActivo(T)||(I.delivery||{}).toda_ciudad)?`<option value="__otro">${D.length?'Otro distrito (delivery por confirmar)':'Escribir mi distrito'}</option>`:''}</select><input id="kddo" placeholder="Escribe tu distrito" style="display:none;margin-top:8px"></div>
 <div><label>Delivery</label><div id="kddv" style="padding:11px 0;font-weight:700;color:var(--b)">Por confirmar según distrito</div><div id="kddobs" class="muted"></div></div></div>
 <label for="kddir">Dirección de entrega</label><input id="kddir" autocomplete="street-address">
 <label for="kdref">Referencia de ubicación</label><input id="kdref" placeholder="Ej.: frente al parque, puerta marrón"></div>
@@ -174,9 +174,16 @@ g('kdcl').innerHTML=L.length?lin:vac;g('kdfl').innerHTML=L.length?lin:'<p class=
 g('kdcs').textContent=kdS(sub);g('kdenv').disabled=!L.length;['kdcbn','kdbn'].forEach(i=>{const e=g(i);e.textContent=n;e.classList.toggle('z',!n)});
 g('kdbt').textContent=kdS(sub);g('kdbq').textContent=n?n+(n==1?' producto':' productos')+' · Subtotal':'Carrito vacío';
 g('kdmd').innerHTML=kdMd(g('kdfe').value);g('kdzmd').innerHTML=kdMd(g('kdzf').value);
-g('kddo').style.display=g('kddi').value=='__otro'?'block':'none';const dis=kdDistrito(),dt=kdDeliveryTxt(T,dis),tf=kdTarifa(T,dis);g('kddv').textContent=dt;g('kdcdv').textContent=dt;const dd=kdDistritos(T).find(d=>d.distrito==dis);g('kddobs').textContent=dd&&dd.obs?dd.obs:(((T.info||{}).delivery||{}).toda_ciudad?kdCobTxt(T)+', confirma por WhatsApp.':'');
-g('kdres').innerHTML=`${L.length?L.map(l=>`<div class="l"><span>${l.q} × ${esc(l.p.nombre)}${l.opc?' ('+esc(l.opc)+')':''}</span><b>${kdS(l.p.precio*l.q)}</b></div>`).join(''):'<div class="l"><span class="muted">Tu carrito está vacío</span></div>'}<div class="l t"><span>Subtotal</span><span id="kdsub">${kdS(sub)}</span></div><div class="l"><span>Delivery</span><b>${esc(dt)}</b></div><div class="l"><span>Total</span><b>${tf===null?'Por confirmar':kdS(sub+tf)+' <span class="muted">(estimado, sujeto a confirmación)</span>'}</b></div>`;
+g('kddo').style.display=g('kddi').value=='__otro'?'block':'none';const dis=kdDistrito(),dt=kdDeliveryTxt(T,dis),tf=kdTarifa(T,dis);g('kddv').textContent=dt;g('kdcdv').textContent=dt;const dd=kdDistritos(T).find(d=>rmDelNorm(d.distrito)==rmDelNorm(dis));g('kddobs').textContent=dd&&dd.obs?dd.obs:(((T.info||{}).delivery||{}).toda_ciudad?kdCobTxt(T)+', confirma por WhatsApp.':'');
+g('kdres').innerHTML=`${L.length?L.map(l=>`<div class="l"><span>${l.q} × ${esc(l.p.nombre)}${l.opc?' ('+esc(l.opc)+')':''}</span><b>${kdS(l.p.precio*l.q)}</b></div>`).join(''):'<div class="l"><span class="muted">Tu carrito está vacío</span></div>'}<div class="l t"><span>Subtotal</span><span id="kdsub">${kdS(sub)}</span></div><div class="l"><span>Delivery</span><b>${esc(dt)}</b></div><div class="l"><span>Total</span><b>${tf===null?kdS(sub)+' <span class="muted">(provisional, falta el delivery)</span>':kdS(sub+tf)+' <span class="muted">(el importe final lo confirma el servidor al enviar)</span>'}</b></div>`;
 try{localStorage.setItem('kd-cart-'+T.slug,JSON.stringify(KD.S.cart))}catch(e){}}
+function kdDetalles(){const v=id=>{const e=document.getElementById(id);return e?e.value.trim():''},o=(a,b)=>v(a)||v(b),f=o('kdzf','kdfe'),M=[],add=(k,val)=>{if(val)M.push(k+': '+val)};
+add('Fecha solicitada',f?kdFecha(f)+(f==kdHoy()?' (mismo día)':''):'');add('Horario preferido',o('kdzh','kdho'));add('Destinatario',v('kdde'));add('Dedicatoria',o('kdzm','kdmsg'));add('Observaciones',v('kdobs'));add('Alergias o restricciones',v('kdal'));return M}
+/* WhatsApp v22: código, ítems, subtotal, delivery y total salen de la RESPUESTA del servidor (= fila en Supabase). */
+function kdMensajeServidor(data){const v=id=>{const e=document.getElementById(id);return e?e.value.trim():''},o=(a,b)=>v(a)||v(b),T=KD_T,{L}=kdCalc(),dis=kdDistrito();
+const M=['Hola '+T.nombre+', quiero hacer este pedido:','Pedido #'+data.codigo,''];(data.items||[]).forEach((x,i)=>{const l=L[i],e=l&&l.p.id==x.id?(l.p.extra||{}):{},opc=l&&l.p.id==x.id&&l.opc&&e.opcion?' – '+e.opcion.etiqueta+': '+l.opc:'';M.push('• '+x.cant+' x '+x.nombre+(e.codigo?' ('+e.codigo+')':'')+opc+' – '+kdS(Number(x.precio)*x.cant))});
+M.push('',...rmDelLineas(data));const add=(k,val)=>{if(val)M.push(k+': '+val)};add('Nombre',o('kdzn','kdcn'));add('Teléfono',v('kdct'));add('Distrito',dis);add('Dirección',v('kddir')?v('kddir')+(v('kdref')?' (Ref.: '+v('kdref')+')':''):'');
+M.push(...kdDetalles());M.push('Medio de pago: Yape','',rmDelImportes(data).definitivo?'¿Podrían confirmarme la disponibilidad?':'¿Podrían confirmarme la disponibilidad y el costo de delivery?');return M.join('\n')}
 function kdMensaje(){const v=id=>{const e=document.getElementById(id);return e?e.value.trim():''},o=(a,b)=>v(a)||v(b),T=KD_T,{L,sub}=kdCalc(),f=o('kdzf','kdfe'),dis=kdDistrito();
 const M=['Hola '+T.nombre+', quiero hacer este pedido:',''];L.forEach(l=>{const x=l.p.extra||{};M.push('• '+l.q+' x '+l.p.nombre+(x.codigo?' ('+x.codigo+')':'')+(l.opc&&x.opcion?' – '+x.opcion.etiqueta+': '+l.opc:'')+' – '+kdS(l.p.precio*l.q))});
 M.push('','Subtotal: '+kdS(sub),'Delivery: '+kdDeliveryTxt(T,dis));
@@ -189,32 +196,31 @@ const show=m=>{if(src=='f'){err.style.display='flex';err.innerHTML='<i class="ti
 if(!L.length)r.push('agrega al menos un producto al carrito');const nom=src=='f'?(v('kdcn')||v('kdzn')):(v('kdzn')||v('kdcn'));if(nom.length<2)r.push('tu nombre');
 const t=(src=='f'?(v('kdct')||v('kdzt')):(v('kdzt')||v('kdct'))).replace(/\D/g,'').replace(/^51/,'');if(!/^9\d{8}$/.test(t))r.push('celular (9 dígitos)');
 const f=g('kdzf').value||g('kdfe').value;if(f&&f<kdHoy())r.push('fecha de hoy en adelante');const hh=src=='f'?(v('kdho')||v('kdzh')):(v('kdzh')||v('kdho')),kdH=rmAnticipacion(L.map(l=>l.p)),ve=rmValidarEntrega(kdH,f,hh);if(ve.err)r.push(ve.err);const fe=kdH>0?ve.valor:f;
+const pv=rmDelTarifa(KD_T,kdDistrito());if(pv.estado=='falta_distrito')r.push('tu distrito');if(pv.estado=='fuera_cobertura')r.push('por ahora no hacemos delivery a '+kdDistrito());
 if(r.length){if(src!='f'&&!L.length){kdCarrito(true);return}show('Revisa: '+r.join(', ')+'.');return}
 err.style.display='none';const dis=kdDistrito(),items=L.map(l=>({id:l.p.id,cant:l.q,...(fe?{fecha:fe}:{})})),btns=[g('kdenv'),document.querySelector('#kdf button[type=submit]')].filter(Boolean);btns.forEach(b=>b.disabled=true);
 const w=window.open('','_blank');if(w)w.opener=null;let res;
 try{if(window.RM_DEMO_LOCAL&&window.RM_DEMO_PEDIDO)res={data:RM_DEMO_PEDIDO(items,kdP)};
-else res=await rmCrearPedido({p_tienda:KD_T.id,p_items:items,p_cliente:nom,p_telefono:t,p_entrega:'Delivery',p_direccion:v('kddir')+(v('kdref')?' (Ref.: '+v('kdref')+')':''),p_distrito:dis,p_nota:kdMensaje().slice(0,900)})}
+else res=await rmCrearPedido({p_tienda:KD_T.id,p_items:items,p_cliente:nom,p_telefono:t,p_entrega:'Delivery',p_direccion:v('kddir')+(v('kdref')?' (Ref.: '+v('kdref')+')':''),p_distrito:dis,p_nota:kdDetalles().join(' · ').slice(0,300)})}
 catch(e){res={error:{message:'No se pudo registrar el pedido. Inténtalo de nuevo.'}}}
 btns.forEach(b=>b.disabled=false);window.rmTurnstileToken=null;try{window.turnstile&&window.turnstile.reset()}catch(e){}
 if(!res||res.error||!res.data||!res.data.codigo){if(w)w.close();show((res&&res.error&&res.error.message)||'No se pudo registrar el pedido.');return}
-const u=plWA(KD_T)+'?text='+encodeURIComponent('Pedido #'+res.data.codigo+'\n'+kdMensaje());window.KD_ULTIMO=u;try{localStorage.setItem('rm_ultimo_pedido',res.data.codigo)}catch(e){}
+const u=plWA(KD_T)+'?text='+encodeURIComponent(kdMensajeServidor(res.data));window.KD_ULTIMO=u;window.KD_RESP=res.data;try{localStorage.setItem('rm_ultimo_pedido',res.data.codigo)}catch(e){}
+const av=rmDelAviso(pv,res.data);if(av){if(w)w.close();window.KD_AVISO=av;const h='<div class="kd-alert r"><i class="ti ti-alert-circle"></i><div>Pedido #'+esc(res.data.codigo)+' registrado. '+esc(av)+' <a class="btn wa sm" target="_blank" rel="noopener" href="'+esc(u)+'"><i class="ti ti-brand-whatsapp"></i> Abrir WhatsApp</a></div></div>';if(src=='f'){err.style.display='flex';err.innerHTML=h}else{kdCarrito(true);g('kdzmd').innerHTML=h}return}
 if(w)w.location.href=u;else location.href=u}
 function kdInformar(){const op=document.getElementById('kdop').value.replace(/\D/g,'');if(!op){document.getElementById('kdop').focus();return}const g=id=>document.getElementById(id).value.trim();
 const m='Hola, '+KD_T.nombre+'. Ya realicé el pago por Yape de mi pedido confirmado'+(g('kdde')?' para '+g('kdde'):'')+(g('kdfe')?' del '+kdFecha(g('kdfe')):'')+'.\nN.º de operación: '+op+'\n¿Me confirman cuando lo validen? Gracias.';window.open(plWA(KD_T)+'?text='+encodeURIComponent(m),'_blank','noopener')}
 /* ===== Panel (reusa "Mi tienda" > Modelo de página y el editor de productos) ===== */
 function kdPanelInfo(I){const d=I.delivery||{},y=I.yape||{},L_=(id,l,v,ph)=>`<label class="block text-sm font-semibold text-gray-800 mb-1 mt-3">${l}</label><input id="${id}" class="border border-gray-300 rounded-lg w-full p-2" value="${esc(v??'')}" placeholder="${ph||''}">`;
-const fil=(d.distritos||[]).map(x=>[x.distrito,x.cobertura===false?'no':'sí',x.tarifa==null?'':x.tarifa,x.disponible===false?'no':'sí',x.obs||''].join(' | ')).join('\n');
 return `<div class="rounded-lg border border-gray-300 p-3 my-3"><b class="text-gray-800">Desayunos: delivery, Yape y pedidos</b>
 ${L_('kdphe','Título de portada',I.hero_titulo,'Sorprende con amor…')}${L_('kdphs','Subtítulo de portada',I.hero_sub)}${L_('kdpesl','Eslogan',I.eslogan)}
-<label class="block text-sm font-semibold text-gray-800 mb-1 mt-3">Distritos y tarifas de delivery (uno por línea)</label><textarea id="kdpdis" rows="5" class="border border-gray-300 rounded-lg w-full p-2 font-mono text-sm" placeholder="Distrito | Cobertura (sí/no) | Tarifa S/ (vacío = por confirmar) | Disponible (sí/no) | Observaciones">${esc(fil)}</textarea>
-<p class="text-sm text-gray-500">Solo aparecen los distritos con cobertura y disponibles. Sin tarifa se muestra "Delivery: Por confirmar según distrito".</p>
-<label class="flex items-center gap-2 mt-2"><input type="checkbox" id="kdptoda" ${d.toda_ciudad?'checked':''}> Delivery a toda la ciudad (los distritos de la lista solo se usan para tarifas)</label><label class="flex items-center gap-2 mt-2"><input type="checkbox" id="kdppro" ${d.promo_gratis?'checked':''}> Promoción de delivery gratis (solo distritos con tarifa 0)</label>
+<input type="hidden" id="kdpdis"><p class="text-sm text-gray-500 mt-2">Distritos y tarifas: usa el bloque "Delivery por distrito".</p>
 <label class="flex items-center gap-2 mt-2"><input type="checkbox" id="kdpmd" ${I.mismo_dia!==false?'checked':''}> Aceptar solicitudes para el mismo día (sujetas a confirmación)</label>
 ${L_('kdpyn','Yape: número receptor (opcional)',y.numero,'Déjalo vacío para enviarlo al confirmar')}${L_('kdpyt','Yape: titular (opcional)',y.titular)}${L_('kdpyq','Yape: link de la imagen QR oficial (opcional)',y.qr,'https://…')}
 <label class="flex items-center gap-2 mt-2"><input type="checkbox" id="kdpref" ${I.fotos_referenciales?'checked':''}> Marcar fotos como "Imagen referencial"</label></div>`}
 function kdPanelLeer(I){const g=id=>document.getElementById(id),si=v=>!/^\s*no\s*$/i.test(v||'');
 I.hero_titulo=g('kdphe').value.trim().slice(0,120);I.hero_sub=g('kdphs').value.trim().slice(0,300);I.eslogan=g('kdpesl').value.trim().slice(0,80);
-I.delivery={toda_ciudad:g('kdptoda').checked,promo_gratis:g('kdppro').checked,distritos:g('kdpdis').value.split('\n').map(l=>l.split('|').map(x=>x.trim())).filter(c=>c[0]).slice(0,60).map(c=>{const t=String(c[2]||'').replace(',','.');return{distrito:c[0].slice(0,60),cobertura:si(c[1]),tarifa:/^\d+(\.\d{1,2})?$/.test(t)?+t:null,disponible:si(c[3]),obs:(c[4]||'').slice(0,120)}})};
+
 I.mismo_dia=g('kdpmd').checked;const n=g('kdpyn').value.replace(/\D/g,'');I.yape={numero:/^9\d{8}$/.test(n)?n:'',titular:g('kdpyt').value.trim().slice(0,60),qr:/^https:\/\//.test(g('kdpyq').value.trim())?g('kdpyq').value.trim():''};I.fotos_referenciales=g('kdpref').checked}
 function kdPanelProd(x){const o=x.opcion||{},I_=(id,l,v,ph)=>`<label class="block text-sm font-semibold text-gray-800 mb-1 mt-3">${l}</label><input id="${id}" class="border border-gray-300 rounded-lg w-full p-2" value="${esc(v??'')}" placeholder="${ph||''}">`;
 return `<div class="grid grid-cols-2 gap-3"><div>${I_('kdxcod','Código',x.codigo,'KL-005')}</div><div><label class="block text-sm font-semibold text-gray-800 mb-1 mt-3">Tipo</label><select id="kdxtip" class="border border-gray-300 rounded-lg w-full p-2"><option value="Desayunos">Desayuno / combo</option><option value="Adicionales" ${x.adicional?'selected':''}>Adicional</option></select></div></div>
